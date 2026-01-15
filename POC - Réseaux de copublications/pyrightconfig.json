@@ -1,0 +1,15 @@
+{
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "useLibraryCodeForTypes": true,
+  "extraPaths": [
+    "./",        // racine du projet
+    "./src"      // si tu as un dossier src pour ton code
+  ],
+  "exclude": [
+    "venv",
+    ".venv",
+    "__pycache__"
+  ]
+}
