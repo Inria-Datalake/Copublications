@@ -1,0 +1,21 @@
+# Environnements Python
+.venv/
+**/.venv/
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS/éditeur
+.DS_Store
+.vscode/
+
+# IDE (PyCharm/IntelliJ)
+.idea/
+**/.idea/
+
+# Python caches déjà committés par le passé
+__pycache__/
+**/__pycache__/
+*.py[cod]
