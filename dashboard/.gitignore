@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets / keys
+*.pem
+*.key
+*.p12
+*.ppk
+*.ssh
+*.pub
+
+# Data files (important for GitHub size limits)
+*.csv
+*.xlsx
+# Data too large for GitHub
+dashboard_dri/Copublis_dashboard.csv
