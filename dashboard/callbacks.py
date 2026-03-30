@@ -942,9 +942,15 @@ def register_callbacks(app, df_base):
         return fig
 
 
+
+    # ========================================================
+    # 2 — WORDCLOUD + TOP 20 MOTS-CLÉS (callback unique)
     # ========================================================
     @app.callback(
-        Output("wordcloud", "src"),
+        [
+            Output("wordcloud", "src"),
+            Output("wordcloud-top-table", "children"),
+        ],
         [
             Input("centre", "value"),
             Input("equipe", "value"),
@@ -958,34 +964,134 @@ def register_callbacks(app, df_base):
     )
     def update_wordcloud(centres, equipes, pays, villes, orgs, annees, tab, stored_data):
         if tab != "tab-wordcloud":
-            return no_update
+            return no_update, no_update
 
         df = pd.DataFrame(stored_data) if stored_data is not None else df_base
         dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
 
-        mots_series = dff["Mots-cles"].dropna().astype(str)
+        VALEURS_EXCLUES = {"nan", "none", "n/a", "na", "", "null"}
+
+        # ── Mots vides français + anglais à exclure du nuage ──
+        STOPWORDS_FR = {
+            "le", "la", "les", "de", "du", "des", "un", "une", "et", "en",
+            "à", "au", "aux", "que", "qui", "quoi", "dont", "où", "par",
+            "pour", "sur", "sous", "dans", "avec", "sans", "est", "sont",
+            "été", "être", "avoir", "nous", "vous", "ils", "elles", "on",
+            "ce", "se", "sa", "son", "ses", "mon", "ma", "mes", "ton", "ta",
+            "tes", "lui", "leur", "leurs", "tout", "tous", "toute", "toutes",
+            "plus", "très", "bien", "ainsi", "donc", "comme", "mais", "ou",
+            "ni", "car", "si", "puis", "cet", "cette", "ces", "l", "d", "j",
+            "s", "m", "n", "y", "qu", "c", "a", "il", "je", "tu", "nous",
+            "dont", "lors", "selon", "entre", "après", "avant", "aussi",
+            "même", "autres", "autre", "peut", "fait", "font", "faire",
+            "the", "of", "and", "in", "to", "a", "is", "for", "this",
+            "that", "are", "with", "as", "an", "on", "by", "from", "be",
+            "or", "not", "at", "it", "its", "we", "our", "they", "which",
+            "have", "has", "been", "can", "more", "also", "than", "these",
+            "two", "new", "one", "into", "both", "their", "such", "show",
+            "used", "using", "based", "paper", "propose", "presents",
+            "presented", "proposed", "approach", "different", "within",
+            "between", "while", "however", "here", "first", "second",
+            "three", "four", "five", "via", "i.e", "e.g", "al", "et",
+        }
+
+        mots_series = (
+            dff["Resume"]
+            .dropna()
+            .astype(str)
+            .str.strip()
+        )
+        mots_series = mots_series[~mots_series.str.lower().isin(VALEURS_EXCLUES)]
+
+        empty_table = html.P("Aucun résumé disponible.", className="text-muted small p-2")
+
         if mots_series.empty:
-            return ""
+            return "", empty_table
 
-        sample = mots_series.sample(min(len(mots_series), 2000), random_state=42)
-        text = " ".join(sample)
+        # Échantillon pour les performances
+        sample = mots_series.sample(min(len(mots_series), 3000), random_state=42)
 
-        wc = WordCloud(
-            width=900,
-            height=400,
-            background_color="white",
-            colormap="tab10",
-        ).generate(text)
+        # ── Tokenisation : on découpe par mots, on filtre les stopwords ──
+        import re
+        mots_liste = []
+        for resume in sample:
+            for mot in re.split(r"[\s\W]+", resume):
+                mot = mot.strip().lower()
+                if (
+                    len(mot) >= 3
+                    and mot not in STOPWORDS_FR
+                    and mot.lower() not in VALEURS_EXCLUES
+                    and not mot.isdigit()
+                ):
+                    mots_liste.append(mot)
 
+        if not mots_liste:
+            return "", empty_table
+
+        # ── WORDCLOUD ──
+        text = " ".join(mots_liste)
+        wc = WordCloud(width=900, height=400, background_color="white", colormap="tab10").generate(text)
         buf = io.BytesIO()
         wc.to_image().save(buf, format="PNG")
-        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+        img_src = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+        # ── TABLEAU TOP 20 ──
+        counts = pd.Series([m.lower() for m in mots_liste]).value_counts()
+        total = counts.sum()
+        top20 = counts.head(20).reset_index()
+        top20.columns = ["Mot-clé", "Occurrences"]
+        top20["Pourcentage"] = (top20["Occurrences"] / total * 100).round(2)
+        max_pct = top20["Pourcentage"].max()
+
+        bar_colors = [
+            PRIMARY, PRIMARY_LIGHT, ACCENT, DARK,
+            "#00CC96", "#AB63FA", "#FFA15A", "#19D3F3",
+            "#FF6692", "#B6E880", "#636EFA", "#EF553B",
+            "#00a5cc", "#27348b", "#a60f79", "#1067a3",
+            "#FF97FF", "#FECB52", "#4dc0db", "#c9191e",
+        ]
+
+        rows = []
+        for i, row in top20.iterrows():
+            pct = row["Pourcentage"]
+            color = bar_colors[i % len(bar_colors)]
+            bar_width = f"{pct / max_pct * 100:.1f}%" if max_pct > 0 else "0%"
+            rows.append(
+                html.Tr([
+                    html.Td(f"{i + 1}", style={"width": "24px", "color": "#9ca3af", "fontSize": "0.73rem",
+                        "fontWeight": "700", "textAlign": "right", "paddingRight": "8px", "verticalAlign": "middle"}),
+                    html.Td(row["Mot-clé"], style={"fontSize": "0.82rem", "fontWeight": "500",
+                        "maxWidth": "140px", "overflow": "hidden", "textOverflow": "ellipsis",
+                        "whiteSpace": "nowrap", "verticalAlign": "middle", "paddingRight": "10px"}),
+                    html.Td(
+                        html.Div([
+                            html.Div(
+                                html.Div(style={"width": bar_width, "height": "100%",
+                                    "backgroundColor": color, "borderRadius": "3px"}),
+                                style={"width": "90px", "height": "8px", "backgroundColor": "rgba(0,0,0,0.07)",
+                                    "borderRadius": "3px", "overflow": "hidden", "flexShrink": "0"}),
+                            html.Span(f"{pct:.2f}%", style={"fontSize": "0.73rem", "color": "#374151",
+                                "marginLeft": "7px", "fontWeight": "600", "minWidth": "42px"}),
+                        ], style={"display": "flex", "alignItems": "center"}),
+                        style={"verticalAlign": "middle"}),
+                    html.Td(f"{int(row['Occurrences'])}", style={"fontSize": "0.73rem", "color": "#9ca3af",
+                        "textAlign": "right", "verticalAlign": "middle", "paddingLeft": "8px"}),
+                ], style={"borderBottom": "1px solid rgba(0,0,0,0.05)"})
+            )
+
+        table = html.Table([
+            html.Thead(html.Tr([
+                html.Th("#",         style={"width": "24px", "fontSize": "0.70rem", "color": "#9ca3af", "textAlign": "right", "paddingRight": "8px", "paddingBottom": "6px"}),
+                html.Th("Mot-clé",   style={"fontSize": "0.70rem", "color": "#9ca3af", "paddingBottom": "6px"}),
+                html.Th("Fréquence", style={"fontSize": "0.70rem", "color": "#9ca3af", "paddingBottom": "6px"}),
+                html.Th("N",         style={"fontSize": "0.70rem", "color": "#9ca3af", "textAlign": "right", "paddingLeft": "8px", "paddingBottom": "6px"}),
+            ], style={"borderBottom": "2px solid rgba(0,0,0,0.10)"})),
+            html.Tbody(rows),
+        ], style={"width": "100%", "borderCollapse": "collapse"})
+
+        return img_src, table
 
 
-
-    # ========================================================
-    # ========================================================
-    # 3 — RÉSEAU : centres / auteurs Inria / auteurs étrangers
     #     + duplication figure pour modal "plein écran interne"
     # ========================================================
     @app.callback(
@@ -1941,3 +2047,264 @@ def register_callbacks(app, df_base):
             )
 
         return fig_line, fig_heatmap, fig_bar
+
+    # ========================================================
+    # 6 — ONGLET PARTS RELATIVES (% du total)
+    # ========================================================
+    @app.callback(
+        [
+            Output("share-pays",    "figure"),
+            Output("share-centre",  "figure"),
+            Output("share-org",     "figure"),
+            Output("share-equipe",  "figure"),
+            Output("share-evol",    "figure"),
+            Output("share-kpi-zone","children"),
+        ],
+        [
+            Input("centre",      "value"),
+            Input("equipe",      "value"),
+            Input("pays",        "value"),
+            Input("ville",       "value"),
+            Input("org",         "value"),
+            Input("annee",       "value"),
+            Input("tabs",        "value"),
+            Input("store-data",  "data"),
+        ],
+    )
+    def update_share(centres, equipes, pays, villes, orgs, annees, tab, stored_data):
+        if tab != "tab-share":
+            return (no_update,) * 6
+
+        df  = pd.DataFrame(stored_data) if stored_data is not None else df_base
+        dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
+
+        # ── Total global (sans aucun filtre, juste les années si précisées) ──
+        df_global = filter_df(df, None, None, None, None, None, annees)
+        total_global = df_global["HalID"].nunique() if not df_global.empty else 1
+        total_sel    = dff["HalID"].nunique()
+
+        empty_fig = go.Figure().update_layout(
+            template=GRAPH_TEMPLATE,
+            title="Aucune sélection ou donnée insuffisante",
+        )
+
+        # ────────────────────────────────────────────────────────
+        # Fonction utilitaire : donut part sélection vs reste
+        # ────────────────────────────────────────────────────────
+        def _donut_share(df_sel, col, filtre_vals, label_col=None):
+            """
+            Pour chaque valeur dans filtre_vals, calcule le % par rapport
+            au total global. Retourne un donut ou un bar horizontal.
+            """
+            if df_sel.empty or col not in df_sel.columns:
+                return empty_fig
+
+            lbl = label_col or col
+
+            if filtre_vals:
+                # Sélection explicite : on montre chaque valeur + "Reste"
+                rows = []
+                for val in filtre_vals:
+                    sub = df_sel[df_sel[col].astype(str) == str(val)]
+                    n   = sub["HalID"].nunique()
+                    rows.append({"label": str(val), "n": n, "pct": n / total_global * 100})
+                n_sel  = sum(r["n"] for r in rows)
+                n_rest = max(total_global - n_sel, 0)
+                rows.append({"label": "Reste (non sélectionné)", "n": n_rest,
+                             "pct": n_rest / total_global * 100})
+
+                labels = [r["label"] for r in rows]
+                values = [r["pct"]   for r in rows]
+                colors = (
+                    [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(rows) - 1)]
+                    + ["rgba(200,200,200,0.35)"]
+                )
+                pull   = [0.06] * (len(rows) - 1) + [0]
+
+                fig = go.Figure(go.Pie(
+                    labels=labels,
+                    values=values,
+                    hole=0.52,
+                    marker=dict(colors=colors),
+                    pull=pull,
+                    textinfo="percent",
+                    hovertemplate="%{label}<br>Part : <b>%{value:.2f}%</b><extra></extra>",
+                    sort=False,
+                ))
+            else:
+                # Pas de sélection explicite → top 8 valeurs du df filtré
+                grp = (
+                    df_sel.groupby(col)["HalID"]
+                    .nunique()
+                    .sort_values(ascending=False)
+                    .head(8)
+                    .reset_index(name="n")
+                )
+                grp["pct"] = grp["n"] / total_global * 100
+                n_shown  = grp["n"].sum()
+                n_autres = max(total_global - n_shown, 0)
+                grp = pd.concat([
+                    grp,
+                    pd.DataFrame([{col: "Autres / non sélectionnés", "n": n_autres,
+                                   "pct": n_autres / total_global * 100}])
+                ], ignore_index=True)
+
+                colors = (
+                    [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(grp) - 1)]
+                    + ["rgba(200,200,200,0.35)"]
+                )
+                fig = go.Figure(go.Pie(
+                    labels=grp[col].astype(str),
+                    values=grp["pct"],
+                    hole=0.52,
+                    marker=dict(colors=colors),
+                    textinfo="percent",
+                    hovertemplate="%{label}<br>Part : <b>%{value:.2f}%</b><extra></extra>",
+                    sort=False,
+                ))
+
+            fig.update_layout(
+                template=GRAPH_TEMPLATE,
+                title=None,
+                showlegend=True,
+                legend=dict(
+                    orientation="v",
+                    x=1.02, xanchor="left",
+                    y=0.5,  yanchor="middle",
+                    font=dict(size=10),
+                    bgcolor="rgba(255,255,255,0.85)",
+                ),
+                margin=dict(l=10, r=10, t=10, b=10),
+                annotations=[dict(
+                    text=f"<b>{total_sel / total_global * 100:.1f}%</b><br>sélection",
+                    x=0.5, y=0.5, font_size=13,
+                    showarrow=False,
+                )],
+            )
+            return fig
+
+        fig_pays   = _donut_share(dff, "Pays",                 pays)
+        fig_centre = _donut_share(dff, "Centre",               centres)
+        fig_org    = _donut_share(dff, "Organisme_copubliant", orgs)
+        fig_equipe = _donut_share(dff, "Equipe",               equipes)
+
+        # ────────────────────────────────────────────────────────
+        # Évolution annuelle de la part (%)
+        # ────────────────────────────────────────────────────────
+        if "Année" not in dff.columns or dff.empty:
+            fig_evol = empty_fig
+        else:
+            # Total global par année
+            ann_global = (
+                df_global.groupby("Année")["HalID"]
+                .nunique()
+                .reset_index(name="Total_global")
+            )
+
+            # Dimensions à tracer : celles pour lesquelles un filtre est actif
+            traces_def = []
+            if pays:
+                traces_def.append(("Pays",                 pays,    "Pays"))
+            if centres:
+                traces_def.append(("Centre",               centres, "Centre"))
+            if orgs:
+                traces_def.append(("Organisme_copubliant", orgs,    "Organisme"))
+            if equipes:
+                traces_def.append(("Equipe",               equipes, "Équipe"))
+            if villes:
+                traces_def.append(("Ville",                villes,  "Ville"))
+            # Si aucun filtre dimensionnel : on trace la sélection globale vs total
+            if not traces_def:
+                traces_def = [("__global__", None, "Sélection")]
+
+            fig_evol = go.Figure()
+            color_idx = 0
+
+            for col, vals, dim_label in traces_def:
+                if col == "__global__":
+                    ann_sel = (
+                        dff.groupby("Année")["HalID"]
+                        .nunique()
+                        .reset_index(name="n_sel")
+                    )
+                    merged = ann_sel.merge(ann_global, on="Année", how="left")
+                    merged["pct"] = (
+                        merged["n_sel"] / merged["Total_global"].replace(0, np.nan) * 100
+                    ).round(2)
+
+                    fig_evol.add_trace(go.Scatter(
+                        x=merged["Année"],
+                        y=merged["pct"],
+                        mode="lines+markers",
+                        name="Sélection globale",
+                        line=dict(width=2.5, color=QUAL_PALETTE[color_idx % len(QUAL_PALETTE)]),
+                        marker=dict(size=7),
+                        hovertemplate="Année : %{x}<br>Part : <b>%{y:.2f}%</b><extra></extra>",
+                    ))
+                    color_idx += 1
+                else:
+                    for val in (vals or []):
+                        ann_sel = (
+                            dff[dff[col].astype(str) == str(val)]
+                            .groupby("Année")["HalID"]
+                            .nunique()
+                            .reset_index(name="n_sel")
+                        )
+                        if ann_sel.empty:
+                            continue
+                        merged = ann_sel.merge(ann_global, on="Année", how="left")
+                        merged["pct"] = (
+                            merged["n_sel"] / merged["Total_global"].replace(0, np.nan) * 100
+                        ).round(2)
+
+                        fig_evol.add_trace(go.Scatter(
+                            x=merged["Année"],
+                            y=merged["pct"],
+                            mode="lines+markers",
+                            name=f"{dim_label} : {val}",
+                            line=dict(width=2.5, color=QUAL_PALETTE[color_idx % len(QUAL_PALETTE)]),
+                            marker=dict(size=7),
+                            hovertemplate=f"{dim_label} : {val}<br>Année : %{{x}}<br>Part : <b>%{{y:.2f}}%</b><extra></extra>",
+                        ))
+                        color_idx += 1
+
+            fig_evol.update_layout(
+                template=GRAPH_TEMPLATE,
+                hovermode="x unified",
+                yaxis=dict(title="Part (% du total annuel)", ticksuffix="%", rangemode="tozero"),
+                xaxis=dict(title="Année", dtick=1),
+                legend=dict(
+                    orientation="h",
+                    x=0.5, xanchor="center",
+                    y=-0.22, yanchor="top",
+                    font=dict(size=10),
+                ),
+                margin=dict(l=10, r=10, t=20, b=60),
+            )
+
+        # ────────────────────────────────────────────────────────
+        # KPI résumé
+        # ────────────────────────────────────────────────────────
+        pct_global = total_sel / total_global * 100 if total_global else 0
+
+        def _kpi(label, val, color):
+            return dbc.Col(
+                dbc.Card(
+                    dbc.CardBody([
+                        html.Div(label, className="small text-muted mb-1"),
+                        html.H4(val, className="fw-bold mb-0", style={"color": color}),
+                    ]),
+                    className="shadow-sm text-center",
+                    style={"borderRadius": "14px", "border": f"1px solid {color}22"},
+                ),
+                md=3, sm=6, xs=12,
+            )
+
+        kpi_zone = dbc.Row([
+            _kpi("Publications sélectionnées",  f"{total_sel:,}",          PRIMARY),
+            _kpi("Total global (période)",       f"{total_global:,}",       PRIMARY_LIGHT),
+            _kpi("Part de la sélection",         f"{pct_global:.2f} %",     ACCENT),
+            _kpi("Publications hors sélection",  f"{total_global - total_sel:,}", DARK),
+        ], className="g-2 mt-1 mb-3")
+
+        return fig_pays, fig_centre, fig_org, fig_equipe, fig_evol, kpi_zone
