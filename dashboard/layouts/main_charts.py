@@ -73,14 +73,49 @@ def main_tab_layout(df):
             style={"borderRadius": "18px", "height": "100%"},
         )
 
-    # ---- Carte spéciale pour le flux (dropdown + graph) ----
+    # ---- Carte spéciale pour le flux ----
     flow_card = dbc.Card(
         [
             dbc.CardHeader(
                 html.Div(
-                    "Flux de copublications par centre",
-                    className="fw-semibold small text-uppercase",
-                    style={"color": "black"},
+                    [
+                        html.Span(
+                            "Flux de copublications par centre",
+                            className="fw-semibold small text-uppercase",
+                        ),
+                        # Légende inline épaisseur
+                        html.Div(
+                            [
+                                html.Span(
+                                    "Épaisseur des arcs",
+                                    className="me-2 text-muted",
+                                    style={"fontSize": "0.72rem"},
+                                ),
+                                html.Span("▬ Fort", style={"fontSize": "0.72rem", "color": "#636EFA", "fontWeight": "bold", "marginRight": "6px"}),
+                                html.Span("─ Moyen", style={"fontSize": "0.72rem", "color": "#636EFA", "marginRight": "6px"}),
+                                html.Span("· Faible", style={"fontSize": "0.72rem", "color": "#636EFA", "opacity": "0.5"}),
+                            ],
+                            className="d-inline-flex align-items-center ms-3",
+                        ),
+                        # Bouton plein écran
+                        html.Button(
+                            "⛶ Agrandir",
+                            id="btn-flowmap-fullscreen-open",
+                            n_clicks=0,
+                            style={
+                                "marginLeft": "auto",
+                                "padding": "4px 12px",
+                                "border": "1px solid rgba(39,52,139,0.25)",
+                                "borderRadius": "8px",
+                                "background": "rgba(39,52,139,0.06)",
+                                "cursor": "pointer",
+                                "fontSize": "0.78rem",
+                                "fontWeight": "600",
+                                "color": "#27348b",
+                            },
+                        ),
+                    ],
+                    className="d-flex align-items-center flex-wrap gap-2 w-100",
                 ),
                 style={
                     "backgroundColor": "transparent",
@@ -91,19 +126,147 @@ def main_tab_layout(df):
             dbc.CardBody(
                 dcc.Graph(
                     id="flow_map",
-                    style={"height": "340px"},
-                    config={"displayModeBar": True, "scrollZoom": True, "displaylogo": False, "modeBarButtonsToAdd": ["zoomInMapbox", "zoomOutMapbox", "resetViewMapbox"]},
+                    style={"height": "500px"},
+                    config={
+                        "displayModeBar": True,
+                        "scrollZoom": True,
+                        "displaylogo": False,
+                        "modeBarButtonsToAdd": [
+                            "zoomInMapbox",
+                            "zoomOutMapbox",
+                            "resetViewMapbox",
+                        ],
+                        "toImageButtonOptions": {
+                            "height": 900,
+                            "width": 1600,
+                            "scale": 2,
+                        },
+                    },
                 ),
                 className="main-graph-card",
-                style={"padding": "0.25rem"},
+                style={"padding": "0"},
             ),
         ],
         className="shadow-sm mb-3",
         style={"borderRadius": "18px", "height": "100%"},
     )
 
+    # ---- Modal plein écran pour le flow map ----
+    flow_fullscreen_modal = html.Div(
+        id="flowmap-fullscreen-modal",
+        style={"display": "none"},
+        children=[
+            # Overlay sombre
+            html.Div(
+                style={
+                    "position": "fixed",
+                    "inset": "0",
+                    "background": "rgba(0,0,0,0.55)",
+                    "zIndex": "9998",
+                },
+                id="flowmap-modal-backdrop",
+            ),
+            # Fenêtre modale
+            html.Div(
+                style={
+                    "position": "fixed",
+                    "inset": "0",
+                    "zIndex": "9999",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    "padding": "20px",
+                    "pointerEvents": "none",
+                },
+                children=[
+                    html.Div(
+                        style={
+                            "width": "min(1500px, 96vw)",
+                            "height": "min(920px, 94vh)",
+                            "background": "white",
+                            "borderRadius": "20px",
+                            "boxShadow": "0 24px 80px rgba(0,0,0,0.35)",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "overflow": "hidden",
+                            "pointerEvents": "all",
+                        },
+                        children=[
+                            # En-tête modal
+                            html.Div(
+                                style={
+                                    "display": "flex",
+                                    "alignItems": "center",
+                                    "justifyContent": "space-between",
+                                    "padding": "12px 18px",
+                                    "borderBottom": "1px solid rgba(0,0,0,0.08)",
+                                    "background": "linear-gradient(90deg, #27348b08 0%, #00a5cc08 100%)",
+                                },
+                                children=[
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "⛶ ",
+                                                style={"color": "#27348b", "fontSize": "1.1rem"},
+                                            ),
+                                            html.Span(
+                                                "Flux de copublications — Vue agrandie",
+                                                style={"fontWeight": "700", "color": "#27348b", "fontSize": "1rem"},
+                                            ),
+                                        ]
+                                    ),
+                                    html.Button(
+                                        "✕ Fermer",
+                                        id="btn-flowmap-fullscreen-close",
+                                        n_clicks=0,
+                                        style={
+                                            "padding": "6px 16px",
+                                            "border": "1px solid rgba(0,0,0,0.18)",
+                                            "borderRadius": "10px",
+                                            "background": "white",
+                                            "cursor": "pointer",
+                                            "fontWeight": "600",
+                                            "fontSize": "0.85rem",
+                                            "color": "#374151",
+                                        },
+                                    ),
+                                ],
+                            ),
+                            # Graphique plein écran
+                            html.Div(
+                                style={"flex": "1", "padding": "0"},
+                                children=[
+                                    dcc.Graph(
+                                        id="flow_map_fullscreen",
+                                        config={
+                                            "displayModeBar": True,
+                                            "scrollZoom": True,
+                                            "displaylogo": False,
+                                            "modeBarButtonsToAdd": [
+                                                "zoomInMapbox",
+                                                "zoomOutMapbox",
+                                                "resetViewMapbox",
+                                            ],
+                                            "toImageButtonOptions": {
+                                                "height": 1200,
+                                                "width": 2200,
+                                                "scale": 2,
+                                            },
+                                        },
+                                        style={"height": "100%", "width": "100%"},
+                                    )
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
     return dbc.Container(
         [
+            flow_fullscreen_modal,
             # ---------- Ligne 1 : explications + barres années ----------
             dbc.Row(
                 [
@@ -173,40 +336,103 @@ def main_tab_layout(df):
                 className="mb-3",
             ),
 
-            # ---------- Ligne 3 : explication flux + flow map ----------
+            # ---------- Ligne 3 : flow map pleine largeur ----------
             dbc.Row(
                 [
                     dbc.Col(
-                        card_text(
-                            "Comprendre le flux de copublications",
-                            [
-                                html.P(
-                                    "Ce graphique représente les flux de "
-                                    "copublications entre un centre Inria et les "
-                                    "villes / pays partenaires.",
-                                    className="mb-2",
-                                ),
-                                html.P(
-                                    "Chaque arc correspond à un ensemble de "
-                                    "copublications. L'épaisseur de l'arc est "
-                                    "proportionnelle au nombre de publications.",
-                                    className="mb-2",
-                                ),
-                                html.P(
-                                    "Vous pouvez sélectionner un centre spécifique "
-                                    "dans le menu déroulant ou utiliser les filtres "
-                                    "globaux en haut de page.",
-                                    className="mb-0",
-                                ),
-                            ],
-                        ),
-                        md=4,
+                        flow_card,
+                        md=12,
                         sm=12,
                     ),
+                ],
+                className="mb-2",
+            ),
+
+            # ---------- Ligne 4 : légende + explication ----------
+            dbc.Row(
+                [
+                    # Bloc légende visuelle
                     dbc.Col(
-                        flow_card,
-                        md=8,
-                        sm=12,
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div(
+                                        "Comment lire cette carte",
+                                        className="fw-semibold small text-uppercase mb-2",
+                                        style={"color": "#27348b"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Div(
+                                                [
+                                                    html.Span("●", style={"color": "#636EFA", "fontSize": "1.2rem", "marginRight": "6px"}),
+                                                    html.Span("Centre Inria — point d'origine des arcs", className="small"),
+                                                ],
+                                                className="mb-1 d-flex align-items-center",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Span("▶", style={"color": "#636EFA", "fontSize": "0.9rem", "marginRight": "6px"}),
+                                                    html.Span("Pointe de flèche — sens de la collaboration", className="small"),
+                                                ],
+                                                className="mb-1 d-flex align-items-center",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Span("▬", style={"color": "#636EFA", "fontSize": "1rem", "fontWeight": "900", "marginRight": "6px"}),
+                                                    html.Span("Arc épais = nombreuses copublications", className="small"),
+                                                ],
+                                                className="mb-1 d-flex align-items-center",
+                                            ),
+                                            html.Div(
+                                                [
+                                                    html.Span("─", style={"color": "#636EFA", "opacity": "0.4", "fontSize": "1rem", "marginRight": "6px"}),
+                                                    html.Span("Arc fin = peu de copublications", className="small"),
+                                                ],
+                                                className="mb-0 d-flex align-items-center",
+                                            ),
+                                        ]
+                                    ),
+                                ],
+                                style={"padding": "0.75rem"},
+                            ),
+                            className="shadow-sm h-100",
+                            style={"borderRadius": "14px"},
+                        ),
+                        md=4, sm=12,
+                    ),
+                    # Bloc conseils d'utilisation
+                    dbc.Col(
+                        dbc.Card(
+                            dbc.CardBody(
+                                [
+                                    html.Div(
+                                        "Conseils d'utilisation",
+                                        className="fw-semibold small text-uppercase mb-2",
+                                        style={"color": "#27348b"},
+                                    ),
+                                    html.P(
+                                        "Utilisez les filtres Centre en haut de page pour isoler un ou plusieurs centres "
+                                        "et réduire le nombre d'arcs affichés.",
+                                        className="small mb-1",
+                                    ),
+                                    html.P(
+                                        "La molette permet de zoomer sur une région. Survolez un arc pour voir le détail "
+                                        "de la collaboration (ville, pays, nombre de publications).",
+                                        className="small mb-1",
+                                    ),
+                                    html.P(
+                                        "Les arcs sont classés en 3 niveaux d'épaisseur : fort (top 25 %), "
+                                        "moyen (25-50 %), faible (bas 50 %).",
+                                        className="small mb-0",
+                                    ),
+                                ],
+                                style={"padding": "0.75rem"},
+                            ),
+                            className="shadow-sm h-100",
+                            style={"borderRadius": "14px"},
+                        ),
+                        md=8, sm=12,
                     ),
                 ],
                 className="mb-3",

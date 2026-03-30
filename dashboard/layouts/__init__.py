@@ -5,6 +5,7 @@ from .filters_kpi import filters_row
 from .main_charts import main_tab_layout
 from .wordcloud_tab import wordcloud_tab_layout
 from .network_tab import network_tab_layout
+from .country_evolution_tab import country_evolution_tab_layout
 from style import PRIMARY, PRIMARY_LIGHT, BG
 
 
@@ -170,7 +171,16 @@ def create_layout(df):
                                 selected_className="custom-tab--selected",
                             ),
 
-                            # ---------- TAB 4 : Évolution des copublications ---------- #
+                            # ---------- TAB 4 : Évolution par pays ---------- #
+                            dcc.Tab(
+                                label="📈 Évolution par pays",
+                                value="tab-country-evolution",
+                                children=[country_evolution_tab_layout()],
+                                className="custom-tab",
+                                selected_className="custom-tab--selected",
+                            ),
+
+                            # ---------- TAB 5 : Évolution des copublications ---------- #
                             dcc.Tab(
                                 label="Évolution des copublications",
                                 value="tab-evolution",

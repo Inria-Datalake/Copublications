@@ -25,20 +25,129 @@ from style import (
 )
 
 # ============================================================
-#  Coordonnées des centres Inria
+#  Coordonnées des centres Inria — noms exacts issus des données + variantes
 # ============================================================
 CENTER_COORDS = {
-    "Bordeaux": (44.8378, -0.5792),
-    "Sophia": (43.6160, 7.0500),
-    "Sophia Antipolis": (43.6160, 7.0500),
-    "Grenoble": (45.1885, 5.7245),
-    "Lille": (50.6292, 3.0573),
-    "Rennes": (48.1173, -1.6778),
-    "Saclay": (48.7323, 2.1710),
-    "Paris": (48.8566, 2.3522),
-    "Lyon": (45.7640, 4.8357),
-    "Nancy": (48.6921, 6.1844),
-    "Montpellier": (43.6108, 3.8767),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Univ. Côte d'Azur  (Sophia Antipolis, Valbonne)
+    # Bâtiment Euler, 2004 route des Lucioles, 06902 Valbonne
+    # ════════════════════════════════════════════════════════
+    "Inria Univ. Cote Azur":                   (43.6160, 7.0678),
+    "Inria Univ. Côte d'Azur":                 (43.6160, 7.0678),
+    "Inria Univ. Côte Azur":                   (43.6160, 7.0678),
+    "Inria Univ Cote Azur":                    (43.6160, 7.0678),
+    "Sophia":                                  (43.6160, 7.0678),
+    "Sophia Antipolis":                        (43.6160, 7.0678),
+    "Inria Sophia":                            (43.6160, 7.0678),
+    "Inria Sophia Antipolis":                  (43.6160, 7.0678),
+    "Inria Sophia Antipolis - Méditerranée":   (43.6160, 7.0678),
+    "Inria Sophia Antipolis Méditerranée":     (43.6160, 7.0678),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Saclay  (Palaiseau — bâtiment Alan Turing, École Polytechnique)
+    # 1 rue Honoré d'Estienne d'Orves, 91120 Palaiseau
+    # ════════════════════════════════════════════════════════
+    "Inria Saclay":                            (48.7136, 2.2122),
+    "Inria Saclay - Île-de-France":            (48.7136, 2.2122),
+    "Inria Saclay Ile-de-France":              (48.7136, 2.2122),
+    "Inria Saclay IPP":                        (48.7136, 2.2122),
+    "Inria Saclay UPS":                        (48.7136, 2.2122),
+    "Saclay":                                  (48.7136, 2.2122),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Univ. Rennes  (campus Beaulieu, Rennes)
+    # Campus de Beaulieu, 263 avenue du Général Leclerc, 35042 Rennes
+    # ════════════════════════════════════════════════════════
+    "Inria Univ. Rennes":                      (48.1147, -1.6387),
+    "Inria Univ Rennes":                       (48.1147, -1.6387),
+    "Rennes":                                  (48.1147, -1.6387),
+    "Inria Rennes":                            (48.1147, -1.6387),
+    "Inria Rennes - Bretagne Atlantique":      (48.1147, -1.6387),
+    "Inria Rennes Bretagne Atlantique":        (48.1147, -1.6387),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Paris  (2 rue Simone Iff, 75012 Paris)
+    # ════════════════════════════════════════════════════════
+    "Inria Paris":                             (48.8474, 2.3842),
+    "Inria de Paris":                          (48.8474, 2.3842),
+    "Paris":                                   (48.8474, 2.3842),
+    "CRI Paris":                               (48.8474, 2.3842),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Paris Sorbonne  (Campus Pierre et Marie Curie, Paris 5e)
+    # 4 place Jussieu, 75005 Paris
+    # ════════════════════════════════════════════════════════
+    "Inria Paris Sorbonne":                    (48.8468, 2.3544),
+    "Inria Paris - Sorbonne":                  (48.8468, 2.3544),
+    "Inria Sorbonne":                          (48.8468, 2.3544),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Univ. Grenoble  (Montbonnot-Saint-Martin)
+    # 655 avenue de l'Europe, 38334 Montbonnot-Saint-Martin
+    # ════════════════════════════════════════════════════════
+    "Inria Univ. Grenoble":                    (45.2095, 5.8346),
+    "Inria Univ Grenoble":                     (45.2095, 5.8346),
+    "Grenoble":                                (45.2095, 5.8346),
+    "Inria Grenoble":                          (45.2095, 5.8346),
+    "Inria Grenoble - Rhône-Alpes":            (45.2095, 5.8346),
+    "Inria Grenoble Rhône-Alpes":              (45.2095, 5.8346),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Univ. Lorraine  (Villers-lès-Nancy)
+    # 615 rue du Jardin Botanique, 54600 Villers-lès-Nancy
+    # ════════════════════════════════════════════════════════
+    "Inria Univ. Lorraine":                    (48.6656, 6.1550),
+    "Inria Univ Lorraine":                     (48.6656, 6.1550),
+    "Nancy":                                   (48.6656, 6.1550),
+    "Inria Nancy":                             (48.6656, 6.1550),
+    "Inria Nancy - Grand Est":                 (48.6656, 6.1550),
+    "Inria Nancy Grand Est":                   (48.6656, 6.1550),
+    "Grand Est":                               (48.6656, 6.1550),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Lille  (Villeneuve d'Ascq — Cité Scientifique)
+    # Parc scientifique de la Haute Borne, 40 av. Halley, 59650 Villeneuve d'Ascq
+    # ════════════════════════════════════════════════════════
+    "Inria Lille":                             (50.6078, 3.1311),
+    "Inria Lille - Nord Europe":               (50.6078, 3.1311),
+    "Inria Lille Nord Europe":                 (50.6078, 3.1311),
+    "Lille":                                   (50.6078, 3.1311),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Univ. Bordeaux  (Talence — campus INRIA)
+    # 200 avenue de la Vieille Tour, 33405 Talence
+    # ════════════════════════════════════════════════════════
+    "Inria Univ. Bordeaux":                    (44.8084, -0.5954),
+    "Inria Univ Bordeaux":                     (44.8084, -0.5954),
+    "Bordeaux":                                (44.8084, -0.5954),
+    "Inria Bordeaux":                          (44.8084, -0.5954),
+    "Inria Bordeaux - Sud-Ouest":              (44.8084, -0.5954),
+    "Inria Bordeaux Sud-Ouest":                (44.8084, -0.5954),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Lyon  (site INSA Lyon, Villeurbanne)
+    # 56 boulevard Niels Bohr, 69100 Villeurbanne
+    # ════════════════════════════════════════════════════════
+    "Inria Lyon":                              (45.7826, 4.8791),
+    "Lyon":                                    (45.7826, 4.8791),
+
+    # ════════════════════════════════════════════════════════
+    # Inria Siège  (Paris 13e — Domaine de Voluceau, Le Chesnay)
+    # Domaine de Voluceau, Rocquencourt, 78153 Le Chesnay-Rocquencourt
+    # ════════════════════════════════════════════════════════
+    "Inria siege":                             (48.8243, 2.0996),
+    "Inria siège":                             (48.8243, 2.0996),
+    "Inria Siege":                             (48.8243, 2.0996),
+    "Inria Siège":                             (48.8243, 2.0996),
+    "Inria siege social":                      (48.8243, 2.0996),
+
+    # ════════════════════════════════════════════════════════
+    # Montpellier  (site LIRMM)
+    # 860 rue de Saint-Priest, 34090 Montpellier
+    # ════════════════════════════════════════════════════════
+    "Montpellier":                             (43.6324, 3.8618),
+    "Inria Montpellier":                       (43.6324, 3.8618),
 }
 
 # ============================================================
@@ -513,23 +622,57 @@ def register_callbacks(app, df_base):
                 h = "".join([c * 2 for c in h])
             return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
-        fig_flow = go.Figure().update_layout(template=GRAPH_TEMPLATE, title=None)
+        def _lookup_centre_coords(centre_name: str, flow_df_fallback):
+            """Recherche coordonnées : exact → sous-chaîne → fallback moyenne."""
+            if centre_name in CENTER_COORDS:
+                return CENTER_COORDS[centre_name]
+            c_low = centre_name.lower()
+            for key, coords in CENTER_COORDS.items():
+                if key.lower() in c_low or c_low in key.lower():
+                    return coords
+            # Fallback : barycentre des destinations (dernier recours)
+            return (
+                float(flow_df_fallback["Latitude"].mean()),
+                float(flow_df_fallback["Longitude"].mean()),
+            )
 
+        # ── Sélection des centres à afficher ──
         if centres and len(centres) > 0:
             centres_sel = [str(c) for c in centres if c is not None and str(c).strip() != ""]
         else:
             centres_sel = sorted(dff["Centre"].dropna().astype(str).unique().tolist())
 
-        MAX_CENTRES_FLOW = 6
-        MAX_DEST_PER_CENTRE = 60
+        MAX_CENTRES_FLOW   = 8   # jusqu'à 8 centres simultanés
+        MAX_DEST_PER_CENTRE = 40  # top 40 destinations par centre (lisibilité)
         centres_sel = centres_sel[:MAX_CENTRES_FLOW]
 
+        # ── Palette dédiée : couleurs bien contrastées entre centres ──
+        FLOW_PALETTE = [
+            "#636EFA",  # bleu vif
+            "#EF553B",  # rouge-orange
+            "#00CC96",  # vert menthe
+            "#AB63FA",  # violet
+            "#FFA15A",  # orange
+            "#19D3F3",  # cyan
+            "#FF6692",  # rose
+            "#B6E880",  # vert clair
+        ]
+
+        fig_flow = go.Figure()
+        origins = []
+        all_dest_lats, all_dest_lons = [], []  # pour le zoom auto
+
         if centres_sel:
-            centre_color_map = {c: QUAL_PALETTE[i % len(QUAL_PALETTE)] for i, c in enumerate(centres_sel)}
-            origins = []
+            centre_color_map = {
+                c: FLOW_PALETTE[i % len(FLOW_PALETTE)]
+                for i, c in enumerate(centres_sel)
+            }
 
             for centre_sel in centres_sel:
-                flow_raw = dff[dff["Centre"].astype(str) == centre_sel].dropna(subset=["Latitude", "Longitude"])
+                flow_raw = (
+                    dff[dff["Centre"].astype(str) == centre_sel]
+                    .dropna(subset=["Latitude", "Longitude"])
+                )
                 if flow_raw.empty:
                     continue
 
@@ -537,7 +680,12 @@ def register_callbacks(app, df_base):
                     flow_raw.groupby(["Ville", "Pays", "Latitude", "Longitude"])
                     .agg(
                         Publications=("HalID", "nunique"),
-                        UE_flag=("UE/Non_UE", lambda x: "UE" if (x == "UE").sum() >= (x != "UE").sum() else "Non_UE"),
+                        UE_flag=(
+                            "UE/Non_UE",
+                            lambda x: "UE"
+                            if (x == "UE").sum() >= (x != "UE").sum()
+                            else "Non_UE",
+                        ),
                     )
                     .reset_index()
                     .sort_values("Publications", ascending=False)
@@ -546,85 +694,207 @@ def register_callbacks(app, df_base):
                 if flow_df.empty:
                     continue
 
-                if centre_sel in CENTER_COORDS:
-                    origin_lat, origin_lon = CENTER_COORDS[centre_sel]
-                else:
-                    origin_lat = float(flow_df["Latitude"].mean())
-                    origin_lon = float(flow_df["Longitude"].mean())
-
+                origin_lat, origin_lon = _lookup_centre_coords(centre_sel, flow_df)
                 origins.append((origin_lat, origin_lon))
 
                 centre_hex = centre_color_map[centre_sel]
                 r, g, b = hex_to_rgb(centre_hex)
                 centre_rgb = f"{r},{g},{b}"
 
-                lats, lons, texts = [], [], []
+                max_pub = float(flow_df["Publications"].max()) if not flow_df.empty else 1
+                total_pubs = int(flow_df["Publications"].sum())
+
+                # ── Seuils visuels pour classer les liens ──
+                p75 = float(flow_df["Publications"].quantile(0.75))
+                p50 = float(flow_df["Publications"].quantile(0.50))
 
                 for _, row in flow_df.iterrows():
                     pub = float(row["Publications"])
-                    is_ue = (row["UE_flag"] == "UE")
-                    alpha = 0.85 if is_ue else 0.45
+                    is_ue = row["UE_flag"] == "UE"
+
+                    # Épaisseur : 3 niveaux selon le rang — renforcés pour fond clair
+                    if pub >= p75:
+                        line_width = 5.5
+                        alpha_line = 0.95
+                    elif pub >= p50:
+                        line_width = 3.0
+                        alpha_line = 0.75
+                    else:
+                        line_width = 1.5
+                        alpha_line = 0.50
+
+                    dest_lat = float(row["Latitude"])
+                    dest_lon = float(row["Longitude"])
+                    all_dest_lats.append(dest_lat)
+                    all_dest_lons.append(dest_lon)
 
                     lat_curve, lon_curve = curved_arc(
-                        origin_lat, origin_lon,
-                        row["Latitude"], row["Longitude"]
+                        origin_lat, origin_lon, dest_lat, dest_lon
                     )
 
-                    lats += list(lat_curve) + [None]
-                    lons += list(lon_curve) + [None]
+                    tooltip = (
+                        f"<b>{centre_sel}</b> → <b>{row['Ville']}</b><br>"
+                        f"Pays : {row['Pays']}<br>"
+                        f"Publications : <b>{int(pub)}</b><br>"
+                        f"Zone : {'🇪🇺 UE' if is_ue else '🌍 Hors UE'}"
+                    )
 
-                    txt = f"{centre_sel} → {row['Ville']} – {row['Pays']} ({int(pub)} pubs)"
-                    texts += [txt] * (len(lat_curve) + 1)
+                    # — Arc glow (halo large, très transparent) —
+                    fig_flow.add_trace(
+                        go.Scattermapbox(
+                            lat=list(lat_curve) + [None],
+                            lon=list(lon_curve) + [None],
+                            mode="lines",
+                            line=dict(
+                                width=line_width + 6,
+                                color=f"rgba({centre_rgb},0.07)",
+                            ),
+                            hoverinfo="skip",
+                            showlegend=False,
+                        )
+                    )
 
+                    # — Arc principal —
+                    fig_flow.add_trace(
+                        go.Scattermapbox(
+                            lat=list(lat_curve) + [None],
+                            lon=list(lon_curve) + [None],
+                            mode="lines",
+                            line=dict(
+                                width=line_width,
+                                color=f"rgba({centre_rgb},{alpha_line})",
+                            ),
+                            hoverinfo="text",
+                            text=[tooltip] * (len(lat_curve) + 1),
+                            showlegend=False,
+                        )
+                    )
+
+                    # — Pointe de flèche : marker à 90 % de l'arc —
+                    tip_idx = int(len(lat_curve) * 0.90)
+                    tip_size = 6 + 4 * (pub / max_pub)  # taille ∝ pubs
+                    fig_flow.add_trace(
+                        go.Scattermapbox(
+                            lat=[float(lat_curve[tip_idx])],
+                            lon=[float(lon_curve[tip_idx])],
+                            mode="markers",
+                            marker=dict(
+                                size=tip_size,
+                                color=centre_hex,
+                                opacity=alpha_line + 0.05,
+                            ),
+                            hoverinfo="text",
+                            text=[tooltip],
+                            showlegend=False,
+                        )
+                    )
+
+                # ── Halo externe du centre (anneau pulsé) ──
                 fig_flow.add_trace(
                     go.Scattermapbox(
-                        lat=lats,
-                        lon=lons,
-                        mode="lines",
-                        line=dict(width=2.5, color=f"rgba({centre_rgb},0.70)"),
-                        hoverinfo="text",
-                        text=texts,
+                        lat=[origin_lat],
+                        lon=[origin_lon],
+                        mode="markers",
+                        marker=dict(
+                            size=52,
+                            color=f"rgba({centre_rgb},0.10)",
+                        ),
+                        hoverinfo="skip",
                         showlegend=False,
                     )
                 )
-
+                # ── Anneau intermédiaire ──
+                fig_flow.add_trace(
+                    go.Scattermapbox(
+                        lat=[origin_lat],
+                        lon=[origin_lon],
+                        mode="markers",
+                        marker=dict(
+                            size=34,
+                            color=f"rgba({centre_rgb},0.20)",
+                        ),
+                        hoverinfo="skip",
+                        showlegend=False,
+                    )
+                )
+                # ── Disque central plein ──
                 fig_flow.add_trace(
                     go.Scattermapbox(
                         lat=[origin_lat],
                         lon=[origin_lon],
                         mode="markers+text",
-                        marker=dict(size=18, color=centre_hex),
+                        marker=dict(
+                            size=20,
+                            color=centre_hex,
+                            opacity=1.0,
+                        ),
                         text=[centre_sel],
                         textposition="bottom right",
+                        textfont=dict(size=11, color="#111111"),
                         name=centre_sel,
                         showlegend=True,
-                        hovertemplate="Centre : %{text}<extra></extra>",
+                        hovertemplate=(
+                            f"<b>Centre Inria {centre_sel}</b><br>"
+                            f"Destinations : {len(flow_df)}<br>"
+                            f"Publications totales : {total_pubs}<br>"
+                            "<extra></extra>"
+                        ),
                     )
                 )
 
-            if origins:
-                center_lat = sum(o[0] for o in origins) / len(origins)
-                center_lon = sum(o[1] for o in origins) / len(origins)
+            # ── Zoom automatique sur la boîte englobante ──
+            if origins and all_dest_lats:
+                all_lats = [o[0] for o in origins] + all_dest_lats
+                all_lons = [o[1] for o in origins] + all_dest_lons
+                lat_c = (min(all_lats) + max(all_lats)) / 2
+                lon_c = (min(all_lons) + max(all_lons)) / 2
+                # Zoom adaptatif selon l'étendue géographique
+                lat_span = max(all_lats) - min(all_lats)
+                lon_span = max(all_lons) - min(all_lons)
+                span = max(lat_span, lon_span)
+                if span > 120:
+                    auto_zoom = 1
+                elif span > 60:
+                    auto_zoom = 2
+                elif span > 30:
+                    auto_zoom = 3
+                else:
+                    auto_zoom = 4
             else:
-                center_lat, center_lon = 25, 5
+                lat_c, lon_c, auto_zoom = 25, 5, 1
 
             fig_flow.update_layout(
-                template=GRAPH_TEMPLATE,
-                title=None,
+                paper_bgcolor="white",
+                plot_bgcolor="white",
+                font=dict(color="#1e293b"),
                 mapbox=dict(
                     style="open-street-map",
-                    center=dict(lat=center_lat, lon=center_lon),
-                    zoom=1,
+                    center=dict(lat=lat_c, lon=lon_c),
+                    zoom=auto_zoom,
                 ),
-                margin=dict(l=10, r=10, t=10, b=10),
+                margin=dict(l=0, r=0, t=0, b=0),
                 legend=dict(
-                    orientation="h",
-                    x=0.5,
-                    xanchor="center",
-                    y=-0.12,
+                    orientation="v",
+                    x=0.01,
+                    xanchor="left",
+                    y=0.99,
                     yanchor="top",
-                    font=dict(size=10),
+                    bgcolor="rgba(255,255,255,0.88)",
+                    bordercolor="rgba(0,0,0,0.12)",
+                    borderwidth=1,
+                    font=dict(size=11, color="#1e293b"),
+                    title=dict(
+                        text="Centres Inria",
+                        font=dict(size=12, color="#27348b"),
+                    ),
                 ),
+                hoverlabel=dict(
+                    bgcolor="#1e293b",
+                    font_size=12,
+                    font_color="#f1f5f9",
+                    bordercolor="rgba(0,0,0,0.2)",
+                ),
+                uirevision="flow_map_stable",
             )
 
         return (
@@ -638,7 +908,40 @@ def register_callbacks(app, df_base):
         )
 
     # ========================================================
-    # 2 — WORDCLOUD
+    # 1bis — FLOW MAP plein écran : ouverture / fermeture
+    # ========================================================
+    @app.callback(
+        Output("flowmap-fullscreen-modal", "style"),
+        [
+            Input("btn-flowmap-fullscreen-open", "n_clicks"),
+            Input("btn-flowmap-fullscreen-close", "n_clicks"),
+        ],
+        State("flowmap-fullscreen-modal", "style"),
+        prevent_initial_call=True,
+    )
+    def toggle_flowmap_fullscreen(open_clicks, close_clicks, current_style):
+        ctx = dash.callback_context
+        if not ctx.triggered:
+            return current_style
+        trigger = ctx.triggered[0]["prop_id"].split(".")[0]
+        if trigger == "btn-flowmap-fullscreen-open":
+            return {"display": "block"}
+        return {"display": "none"}
+
+    # ========================================================
+    # 1ter — FLOW MAP plein écran : copie de la figure
+    # ========================================================
+    @app.callback(
+        Output("flow_map_fullscreen", "figure"),
+        Input("flow_map", "figure"),
+        prevent_initial_call=True,
+    )
+    def sync_flowmap_fullscreen(fig):
+        if fig is None:
+            return no_update
+        return fig
+
+
     # ========================================================
     @app.callback(
         Output("wordcloud", "src"),
@@ -1475,3 +1778,166 @@ def register_callbacks(app, df_base):
         )
 
         return fig_sunburst, fig_team, fig_sankey, fig_radar, story_div
+
+    # ========================================================
+    # 5 — Onglet "Évolution par pays"
+    # ========================================================
+    @app.callback(
+        [
+            Output("country_line_chart", "figure"),
+            Output("country_heatmap", "figure"),
+            Output("country_top_bar", "figure"),
+        ],
+        [
+            Input("centre", "value"),
+            Input("equipe", "value"),
+            Input("pays", "value"),
+            Input("ville", "value"),
+            Input("org", "value"),
+            Input("annee", "value"),
+            Input("tabs", "value"),
+            Input("store-data", "data"),
+            Input("country-top-n", "value"),
+        ],
+    )
+    def update_country_evolution(
+        centres, equipes, pays, villes, orgs, annees, tab, stored_data, top_n
+    ):
+        if tab != "tab-country-evolution":
+            return no_update, no_update, no_update
+
+        df = pd.DataFrame(stored_data) if stored_data is not None else df_base
+        dff = filter_df(df, centres, equipes, pays, villes, orgs, annees)
+
+        if top_n is None:
+            top_n = 10
+
+        empty_fig = go.Figure().update_layout(
+            template=GRAPH_TEMPLATE,
+            title="Aucune donnée pour les filtres actuels",
+        )
+
+        if dff.empty or "Pays" not in dff.columns or "Année" not in dff.columns:
+            return empty_fig, empty_fig, empty_fig
+
+        # ── Top N pays (par volume total) ──
+        top_pays_list = (
+            dff.groupby("Pays")["HalID"]
+            .nunique()
+            .sort_values(ascending=False)
+            .head(top_n)
+            .index.tolist()
+        )
+        dff_top = dff[dff["Pays"].isin(top_pays_list)]
+
+        # ── 1) Graphique ligne : évolution par an et par pays ──
+        line_df = (
+            dff_top.groupby(["Année", "Pays"])["HalID"]
+            .nunique()
+            .reset_index(name="Publications")
+            .sort_values("Année")
+        )
+
+        if line_df.empty:
+            fig_line = empty_fig
+        else:
+            fig_line = px.line(
+                line_df,
+                x="Année",
+                y="Publications",
+                color="Pays",
+                markers=True,
+                color_discrete_sequence=QUAL_PALETTE,
+                title=f"Évolution annuelle des copublications – Top {top_n} pays",
+            )
+            fig_line.update_traces(line=dict(width=2.5), marker=dict(size=7))
+            fig_line.update_layout(
+                template=GRAPH_TEMPLATE,
+                hovermode="x unified",
+                legend=dict(
+                    orientation="v",
+                    x=1.02,
+                    xanchor="left",
+                    y=1,
+                    yanchor="top",
+                    font=dict(size=10),
+                    bgcolor="rgba(255,255,255,0.85)",
+                ),
+                margin=dict(l=10, r=10, t=50, b=40),
+            )
+
+        # ── 2) Heatmap pays × année ──
+        pivot_df = (
+            dff_top.groupby(["Pays", "Année"])["HalID"]
+            .nunique()
+            .unstack(fill_value=0)
+        )
+
+        if pivot_df.empty:
+            fig_heatmap = empty_fig
+        else:
+            # Trier les pays par total décroissant
+            pivot_df = pivot_df.loc[
+                pivot_df.sum(axis=1).sort_values(ascending=False).index
+            ]
+            years_cols = sorted(pivot_df.columns.tolist())
+            pivot_df = pivot_df[years_cols]
+
+            fig_heatmap = go.Figure(
+                go.Heatmap(
+                    z=pivot_df.values,
+                    x=[str(int(y)) for y in years_cols],
+                    y=pivot_df.index.tolist(),
+                    colorscale=[
+                        [0, "#ccedf6"],
+                        [0.4, "#00a5cc"],
+                        [0.7, "#1067a3"],
+                        [1, "#27348b"],
+                    ],
+                    hovertemplate=(
+                        "Pays : %{y}<br>Année : %{x}<br>Publications : %{z}<extra></extra>"
+                    ),
+                    showscale=True,
+                )
+            )
+            fig_heatmap.update_layout(
+                template=GRAPH_TEMPLATE,
+                title=f"Heatmap des copublications – Top {top_n} pays × année",
+                xaxis=dict(title="Année", tickangle=-35),
+                yaxis=dict(title=""),
+                margin=dict(l=10, r=10, t=50, b=40),
+            )
+
+        # ── 3) Barres horizontales : volume total par pays ──
+        bar_df = (
+            dff_top.groupby("Pays")["HalID"]
+            .nunique()
+            .reset_index(name="Publications")
+            .sort_values("Publications", ascending=True)
+        )
+
+        if bar_df.empty:
+            fig_bar = empty_fig
+        else:
+            colors_bar = [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(bar_df))]
+            fig_bar = go.Figure(
+                go.Bar(
+                    x=bar_df["Publications"],
+                    y=bar_df["Pays"],
+                    orientation="h",
+                    marker=dict(color=colors_bar, line=dict(width=0)),
+                    hovertemplate="Pays : %{y}<br>Publications : %{x}<extra></extra>",
+                    text=bar_df["Publications"],
+                    textposition="outside",
+                )
+            )
+            fig_bar.update_layout(
+                template=GRAPH_TEMPLATE,
+                title=f"Volume total – Top {top_n} pays",
+                xaxis=dict(title="Publications"),
+                yaxis=dict(title=""),
+                margin=dict(l=10, r=10, t=50, b=40),
+                showlegend=False,
+            )
+
+        return fig_line, fig_heatmap, fig_bar

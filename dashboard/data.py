@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 # 📌 Chemins corrigés
-BASE_DIR = Path(r"C:\Users\abapst\nb_python\Copublications\dashboard\dashboard.csv")
+BASE_DIR = Path(r"C:\Users\abapst\nb_python\Copublications\dashboard")
 
 XLSX_PATH = BASE_DIR / "dashboard.xlsx"
 CSV_PATH  = BASE_DIR / "dashboard.csv"

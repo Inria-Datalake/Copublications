@@ -1,0 +1,36 @@
+[33mcommit 35720c5470ae5bd52cd23df75f253c3fc9083c13[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32madd-dashboard[m[33m, [m[1;31morigin/add-dashboard[m[33m)[m
+Author: SteffyAndreaNebot <105048066+steffynebot@users.noreply.github.com>
+Date:   Fri Feb 27 14:29:01 2026 +0100
+
+    Add dashboard folder (without large data files)
+
+.gitattributes
+"POC - R\303\251seaux de copublications/Copubliants_par_auteur_Inria_Bordeaux_Sophia.xlsx"
+"POC - R\303\251seaux de copublications/ID_Aurehal_Ville_Etat_Latitude_Longitude.xlsx"
+"POC - R\303\251seaux de copublications/entities_all.csv"
+dashboard/.gitattributes
+dashboard/.gitignore
+dashboard/Dockerfile
+dashboard/Repporting_erreurs_fichier.ipynb
+dashboard/app.py
+dashboard/assets/custom.css
+dashboard/assets/dark-mode.css
+dashboard/assets/dependencies.html
+dashboard/assets/export-pdf.js
+dashboard/assets/globe_dark.png
+dashboard/assets/logo_data.png
+dashboard/assets/logo_inria.png
+dashboard/callbacks.py
+dashboard/data.py
+"dashboard/hboard.csv \357\200\276\357\200\276 .gitignore"
+dashboard/layouts/__init__.py
+dashboard/layouts/filters_kpi.py
+dashboard/layouts/main_charts.py
+dashboard/layouts/map_tab.py
+dashboard/layouts/network_tab.py
+dashboard/layouts/wordcloud_tab.py
+dashboard/profiling_report.py
+dashboard/requirements.txt
+dashboard/style.py
+dashboard/ville_boost_v3.ipynb
+"dashboard/\357\200\242Y\357\200\272\357\201\234.ssh\357\200\242"

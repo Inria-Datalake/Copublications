@@ -1,0 +1,30 @@
+A	.gitattributes
+M	"POC - R\303\251seaux de copublications/Copubliants_par_auteur_Inria_Bordeaux_Sophia.xlsx"
+M	"POC - R\303\251seaux de copublications/ID_Aurehal_Ville_Etat_Latitude_Longitude.xlsx"
+M	"POC - R\303\251seaux de copublications/entities_all.csv"
+A	dashboard/.gitattributes
+A	dashboard/.gitignore
+A	dashboard/Dockerfile
+A	dashboard/Repporting_erreurs_fichier.ipynb
+A	dashboard/app.py
+A	dashboard/assets/custom.css
+A	dashboard/assets/dark-mode.css
+A	dashboard/assets/dependencies.html
+A	dashboard/assets/export-pdf.js
+A	dashboard/assets/globe_dark.png
+A	dashboard/assets/logo_data.png
+A	dashboard/assets/logo_inria.png
+A	dashboard/callbacks.py
+A	dashboard/data.py
+A	"dashboard/hboard.csv \357\200\276\357\200\276 .gitignore"
+A	dashboard/layouts/__init__.py
+A	dashboard/layouts/filters_kpi.py
+A	dashboard/layouts/main_charts.py
+A	dashboard/layouts/map_tab.py
+A	dashboard/layouts/network_tab.py
+A	dashboard/layouts/wordcloud_tab.py
+A	dashboard/profiling_report.py
+A	dashboard/requirements.txt
+A	dashboard/style.py
+A	dashboard/ville_boost_v3.ipynb
+A	"dashboard/\357\200\242Y\357\200\272\357\201\234.ssh\357\200\242"

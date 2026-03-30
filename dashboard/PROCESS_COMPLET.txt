@@ -1,0 +1,91 @@
+PROCESS COMPLET DU CLONE GIT A L'OUVERTURE DU DASHBOARD
+
+🧩 CONTEXTE
+
+VM distante : AlmaLinux 9.7
+
+Accès SSH via alias : ssh pocdatalake
+
+Projet : Inria-Datalake/Copublications
+
+App : Dashboard Dash (Python)
+
+Données : fichiers suivis par Git LFS
+
+
+Connexion à la VM 
+
+Depuis  WSL (UBUNTU) : ssh pocdatalake
+     --> on arrive sur :abapst@prod-datadcis-app
+
+2. Installer les dépendances système (AlmaLinux ≠ apt)
+
+sudo dnf -y update
+sudo dnf -y install git python3 python3-devel gcc gcc-c++ make \
+  freetype-devel libpng-devel pkgconf-pkg-config git-lfs
+
+Puis Initialiser Git LFS : git lfs install
+
+3. Cloner le projet Git
+
+mkdir -p ~/apps
+cd ~/apps
+git clone https://github.com/Inria-Datalake/Copublications.git
+cd Copublications
+
+Puis Récupérer les fichiers LFS (IMPORTANT ⚠️) :
+
+git lfs pull
+
+4. Aller dans le dossier dashboard
+
+cd ~/apps/Copublications/dashboard
+
+5. Créer l’environnement virtuel Python
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install openpyxl
+
+6. Générer le CSV à partir du XLSX (si nécessaire)
+
+source .venv/bin/activate
+python -c "from data import create_csv_from_xlsx; create_csv_from_xlsx(force=True)"
+
+7. Lancer l’application
+
+source .venv/bin/activate
+nohup python app.py > dash.log 2>&1 &
+
+Puis vérifier:
+
+ss -lntp | grep 8050
+curl -I http://127.0.0.1:8050
+
+8. Ouvrir le dashboard depuis ton PC
+
+Depuis WSL:
+ssh -L 8050:localhost:8050 pocdatalake
+
+Puis dans le navigateur Windows: http://localhost:8050
+
+9. Workflow pour mettre à jour le code
+
+À chaque modification sur GitHub :
+
+cd ~/apps/Copublications
+git pull --rebase
+git lfs pull
+
+Puis relancer l’app :
+
+pkill -f "python app.py"
+cd dashboard
+source .venv/bin/activate
+nohup python app.py > dash.log 2>&1 &
+
+
+
+
