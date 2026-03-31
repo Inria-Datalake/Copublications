@@ -50,57 +50,29 @@ def network_tab_layout():
                 )
             ),
 
-            # ---------- Contrôles ----------
+            # Sliders cachés pour compat callbacks (valeurs fixes)
+            html.Div(dcc.Slider(id="network-max-pubs", min=200, max=10000, step=200, value=2000),
+                     style={"display": "none"}),
+            html.Div(dcc.Slider(id="network-max-nodes", min=100, max=5000, step=100, value=1500),
+                     style={"display": "none"}),
+
+            # ---------- Bouton plein écran ----------
             html.Div(
-                [
-                    html.Div(
-                        [
-                            html.Div("Max publications (échantillon)",
-                                     style={"fontWeight": "600", "fontSize": "0.9rem"}),
-                            dcc.Slider(
-                                id="network-max-pubs",
-                                min=200, max=10000, step=200, value=2000,
-                                tooltip={"placement": "bottom", "always_visible": False},
-                            ),
-                        ],
-                        style={"flex": "1", "minWidth": "320px"},
-                    ),
-                    html.Div(
-                        [
-                            html.Div("Max nœuds (compat)",
-                                     style={"fontWeight": "600", "fontSize": "0.9rem"}),
-                            dcc.Slider(
-                                id="network-max-nodes",
-                                min=100, max=5000, step=100, value=1500,
-                                tooltip={"placement": "bottom", "always_visible": False},
-                            ),
-                        ],
-                        style={"flex": "1", "minWidth": "320px"},
-                    ),
-                    html.Button(
-                        "⛶ Plein écran",
-                        id="btn-network-fullscreen-open",
-                        n_clicks=0,
-                        style={
-                            "padding": "8px 14px",
-                            "border": "1px solid rgba(0,0,0,0.2)",
-                            "borderRadius": "10px",
-                            "background": "white",
-                            "cursor": "pointer",
-                            "fontWeight": "600",
-                            "height": "40px",
-                            "alignSelf": "flex-end",
-                        },
-                    ),
-                ],
-                style={
-                    "display": "flex",
-                    "justifyContent": "space-between",
-                    "alignItems": "flex-end",
-                    "gap": "14px",
-                    "marginBottom": "10px",
-                    "flexWrap": "wrap",
-                },
+                html.Button(
+                    "⛶ Plein écran",
+                    id="btn-network-fullscreen-open",
+                    n_clicks=0,
+                    style={
+                        "padding": "8px 14px",
+                        "border": "1px solid rgba(0,0,0,0.2)",
+                        "borderRadius": "10px",
+                        "background": "white",
+                        "cursor": "pointer",
+                        "fontWeight": "600",
+                        "height": "40px",
+                    },
+                ),
+                style={"marginBottom": "10px"},
             ),
 
             # ---------- Graphe + fiche côte à côte ----------
@@ -127,21 +99,7 @@ def network_tab_layout():
                                 style={"height": "80vh", "minHeight": "650px"},
                             ),
                         ),
-                        md=9, sm=12,
-                    ),
-
-                    # Fiche nœud (panneau latéral 3/12)
-                    dbc.Col(
-                        html.Div(
-                            id="network-node-panel",
-                            children=_empty_panel(),
-                            style={
-                                "height": "80vh",
-                                "minHeight": "650px",
-                                "overflowY": "auto",
-                            },
-                        ),
-                        md=3, sm=12,
+                        md=12, sm=12,
                     ),
                 ],
                 className="g-2",
@@ -229,30 +187,4 @@ def network_tab_layout():
         fluid=True,
         className="mt-2",
         style={"padding": "10px"},
-    )
-
-
-def _empty_panel():
-    """Panneau vide affiché avant tout clic."""
-    return dbc.Card(
-        dbc.CardBody(
-            html.Div(
-                [
-                    html.Div("👆", style={"fontSize": "2.5rem", "marginBottom": "10px"}),
-                    html.P(
-                        "Cliquez sur un nœud pour afficher sa fiche",
-                        className="text-muted small text-center mb-0",
-                    ),
-                ],
-                style={
-                    "display": "flex",
-                    "flexDirection": "column",
-                    "alignItems": "center",
-                    "justifyContent": "center",
-                    "height": "200px",
-                },
-            )
-        ),
-        className="shadow-sm",
-        style={"borderRadius": "16px", "border": "1px dashed rgba(0,0,0,0.15)"},
     )
