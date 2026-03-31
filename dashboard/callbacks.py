@@ -22,6 +22,8 @@ from style import (
     DARK,
     CYAN_SCALE,
     QUAL_PALETTE,
+    CENTRE_COLOR_MAP,
+    get_centre_color,
 )
 
 # ============================================================
@@ -438,7 +440,7 @@ def register_callbacks(app, df_base):
                 pill=True,
                 className="me-1 mb-1",
                 style={
-                    "backgroundColor": QUAL_PALETTE[i % len(QUAL_PALETTE)],
+                    "backgroundColor": get_centre_color(c, i),
                     "color": "white",
                     "fontSize": "0.8rem",
                 },
@@ -646,25 +648,14 @@ def register_callbacks(app, df_base):
         MAX_DEST_PER_CENTRE = 40  # top 40 destinations par centre (lisibilité)
         centres_sel = centres_sel[:MAX_CENTRES_FLOW]
 
-        # ── Palette dédiée : couleurs bien contrastées entre centres ──
-        FLOW_PALETTE = [
-            "#636EFA",  # bleu vif
-            "#EF553B",  # rouge-orange
-            "#00CC96",  # vert menthe
-            "#AB63FA",  # violet
-            "#FFA15A",  # orange
-            "#19D3F3",  # cyan
-            "#FF6692",  # rose
-            "#B6E880",  # vert clair
-        ]
-
         fig_flow = go.Figure()
         origins = []
-        all_dest_lats, all_dest_lons = [], []  # pour le zoom auto
+        all_dest_lats, all_dest_lons = [], []
 
+        # ── Palette fixe par centre ──
         if centres_sel:
             centre_color_map = {
-                c: FLOW_PALETTE[i % len(FLOW_PALETTE)]
+                c: get_centre_color(c, i)
                 for i, c in enumerate(centres_sel)
             }
 
@@ -1098,6 +1089,7 @@ def register_callbacks(app, df_base):
         [
             Output("network", "figure"),
             Output("network-fullscreen", "figure"),
+            Output("network-graph-data", "data"),
         ],
         [
             Input("centre", "value"),
@@ -1109,7 +1101,8 @@ def register_callbacks(app, df_base):
             Input("tabs", "value"),
             Input("store-data", "data"),
             Input("network-max-pubs", "value"),
-            Input("network-max-nodes", "value"),  # gardé pour compat, non utilisé
+            Input("network-max-nodes", "value"),
+            Input("toggle-dark", "n_clicks"),
         ],
     )
     def update_network(
@@ -1123,10 +1116,11 @@ def register_callbacks(app, df_base):
         stored_data,
         max_pubs,
         max_nodes,
+        dark_clicks,
     ):
         # On ne dessine le réseau que dans l'onglet dédié
         if tab != "tab-network":
-            return no_update, no_update
+            return no_update, no_update, no_update
 
         # dataframe source (upload ou df de base)
         df = pd.DataFrame(stored_data) if stored_data is not None else df_base
@@ -1310,192 +1304,543 @@ def register_callbacks(app, df_base):
         for nid, c in zip(pos.keys(), coords):
             pos[nid] = c
 
-        # ------------- Traces des arêtes (gris clair, pas vert) -------------
-        edge_x, edge_y = [], []
-        for u, v in G.edges():
-            x0, y0 = pos[u]
-            x1, y1 = pos[v]
-            edge_x += [x0, x1, None]
-            edge_y += [y0, y1, None]
+        # ── Fond selon le mode sombre (impair = sombre, pair/None = clair) ──
+        is_dark = bool(dark_clicks) and (dark_clicks % 2 == 1)
+        if is_dark:
+            BG_NET          = "#0f1117"
+            EDGE_NEUTRAL    = "rgba(180,180,200,0.15)"
+            EDGE_ALPHA      = 0.25
+            FG_COLOR        = "rgba(148,163,184,0.50)"
+            LABEL_FR_COLOR  = "rgba(203,213,225,0.60)"
+            LABEL_FG_COLOR  = "rgba(148,163,184,0.40)"
+            TITLE_COLOR     = "#94a3b8"
+            LEGEND_BG       = "rgba(10,12,20,0.88)"
+            LEGEND_FG       = "#cbd5e1"
+            LEGEND_BORDER   = "rgba(255,255,255,0.10)"
+            ANNOT_BG        = "rgba(10,12,20,0.80)"
+            ANNOT_FG        = "#94a3b8"
+            TEXT_NODE_COLOR = "rgba(255,255,255,0.95)"
+            HALO_ALPHA_OUT  = 0.05
+            HALO_ALPHA_MID  = 0.18
+            DISC_ALPHA      = 0.85
+        else:
+            BG_NET          = "#f8fafc"
+            EDGE_NEUTRAL    = "rgba(100,100,130,0.12)"
+            EDGE_ALPHA      = 0.35
+            FG_COLOR        = "rgba(100,116,139,0.55)"
+            LABEL_FR_COLOR  = "rgba(30,41,59,0.65)"
+            LABEL_FG_COLOR  = "rgba(71,85,105,0.50)"
+            TITLE_COLOR     = "#475569"
+            LEGEND_BG       = "rgba(248,250,252,0.92)"
+            LEGEND_FG       = "#334155"
+            LEGEND_BORDER   = "rgba(0,0,0,0.10)"
+            ANNOT_BG        = "rgba(248,250,252,0.88)"
+            ANNOT_FG        = "#64748b"
+            TEXT_NODE_COLOR = "rgba(255,255,255,0.95)"
+            HALO_ALPHA_OUT  = 0.08
+            HALO_ALPHA_MID  = 0.20
+            DISC_ALPHA      = 0.90
 
-        edge_trace = go.Scattergl(
-            x=edge_x,
-            y=edge_y,
-            mode="lines",
-            line=dict(width=0.8, color="rgba(160,160,160,0.45)"),
-            hoverinfo="none",
-            showlegend=False,
-        )
-
-        # ------------- Couleurs centres -------------
+        # ------------- Couleurs fixes par centre (défini EN PREMIER) -------------
         centre_names = sorted({a["label"] for a in node_attrs.values() if a["type"] == "centre"})
         centre_color_map = {
-            name: QUAL_PALETTE[i % len(QUAL_PALETTE)]
+            name: get_centre_color(name, i)
             for i, name in enumerate(centre_names)
         }
 
-        # ------------- Préparer coordonnées + tailles + hover strings -------------
-        centre_x, centre_y, centre_size, centre_outline, centre_label, centre_hover = [], [], [], [], [], []
-        fr_x, fr_y, fr_size, fr_label, fr_hover = [], [], [], [], []
-        fg_x, fg_y, fg_size, fg_label, fg_hover = [], [], [], [], []
+        # Helper : hex → composantes RGB
+        def _hex_rgb(hex_color):
+            h = hex_color.lstrip("#")
+            return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+        # ------------- Arêtes colorées par centre d'origine -------------
+        edge_traces = []
+        centre_edge_map = {}
+        other_edges = []
+
+        for u, v in G.edges():
+            u_type = node_attrs.get(u, {}).get("type", "")
+            v_type = node_attrs.get(v, {}).get("type", "")
+            centre_id = None
+            if u_type == "centre":
+                centre_id = u
+            elif v_type == "centre":
+                centre_id = v
+            elif u_type == "fr":
+                for cid in centres_stats:
+                    if u in centres_stats[cid].get("fr_authors", set()):
+                        centre_id = cid
+                        break
+            if centre_id:
+                centre_edge_map.setdefault(centre_id, []).append((u, v))
+            else:
+                other_edges.append((u, v))
+
+        # Arêtes neutres
+        if other_edges:
+            ex, ey = [], []
+            for u, v in other_edges:
+                x0, y0 = pos[u]; x1, y1 = pos[v]
+                ex += [x0, x1, None]; ey += [y0, y1, None]
+            edge_traces.append(go.Scattergl(
+                x=ex, y=ey, mode="lines",
+                line=dict(width=0.5, color=EDGE_NEUTRAL),
+                hoverinfo="none", showlegend=False,
+            ))
+
+        # Arêtes colorées par centre
+        for cid, edges in centre_edge_map.items():
+            centre_lbl = centres_stats[cid]["label"]
+            c_hex = centre_color_map.get(centre_lbl, "#888888")
+            r_, g_, b_ = _hex_rgb(c_hex)
+            edge_color = f"rgba({r_},{g_},{b_},{EDGE_ALPHA})"
+            ex, ey = [], []
+            for u, v in edges:
+                x0, y0 = pos[u]; x1, y1 = pos[v]
+                ex += [x0, x1, None]; ey += [y0, y1, None]
+            edge_traces.append(go.Scattergl(
+                x=ex, y=ey, mode="lines",
+                line=dict(width=0.6, color=edge_color),
+                hoverinfo="none", showlegend=False,
+            ))
+
+        # ── Données enrichies pour chaque nœud (customdata JSON pour la fiche) ──
+        import json as _json
+
+        centre_x, centre_y, centre_size = [], [], []
+        centre_outline, centre_label = [], []
+        centre_hover, centre_custom = [], []
+
+        fr_x, fr_y, fr_size, fr_color_list = [], [], [], []
+        fr_labels_list, fr_hover_data, fr_custom = [], [], []
+
+        fg_x, fg_y, fg_size = [], [], []
+        fg_labels_list, fg_hover_data, fg_custom = [], [], []
+
+        # Map auteur FR → centre
+        fr_to_centre = {}
+        for cid, cstats in centres_stats.items():
+            for frid in cstats.get("fr_authors", set()):
+                fr_to_centre[frid] = cstats["label"]
 
         for nid, attrs in node_attrs.items():
             x, y = pos[nid]
             ntype = attrs["type"]
 
             if ntype == "centre":
-                centre_x.append(x)
-                centre_y.append(y)
-                centre_label.append(attrs["label"])
-                centre_outline.append(centre_color_map.get(attrs["label"], "#E91E63"))
-                centre_size.append(24 + 5 * math.sqrt(max(attrs["pubs"], 1)))
+                c_hex = centre_color_map.get(attrs["label"], "#888888")
+                r_, g_, b_ = _hex_rgb(c_hex)
+                sz = 38 + 7 * math.sqrt(max(attrs["pubs"], 1))
 
-                centre_hover.append(
-                    f"<b>Centre</b> : {attrs['label']}<br>"
-                    f"Publications : {attrs['pubs']}<br>"
-                    f"Auteurs Inria : {attrs['nb_fr']}<br>"
-                    f"Auteurs copubliants : {attrs['nb_foreign']}<br>"
-                    f"Pays : {attrs['nb_countries']}<br>"
-                    f"Organismes : {attrs['nb_orgs']}"
+                centre_x.append(x); centre_y.append(y)
+                centre_label.append(attrs["label"])
+                centre_outline.append(c_hex)
+                centre_size.append(sz)
+
+                # Hover texte riche
+                hover_txt = (
+                    f"<b style='font-size:13px'>🏛 {attrs['label']}</b><br>"
+                    f"📄 <b>{attrs['pubs']}</b> publications<br>"
+                    f"👤 <b>{attrs['nb_fr']}</b> auteurs Inria<br>"
+                    f"🌍 <b>{attrs['nb_foreign']}</b> auteurs étrangers<br>"
+                    f"🗺 <b>{attrs['nb_countries']}</b> pays · "
+                    f"🏢 <b>{attrs['nb_orgs']}</b> organismes"
                 )
+                json_data = _json.dumps({
+                    "type": "centre", "id": nid,
+                    "label": attrs["label"],
+                    "pubs": attrs["pubs"],
+                    "nb_fr": attrs["nb_fr"],
+                    "nb_foreign": attrs["nb_foreign"],
+                    "nb_countries": attrs["nb_countries"],
+                    "nb_orgs": attrs["nb_orgs"],
+                    "color": c_hex,
+                })
+                centre_custom.append([hover_txt, json_data])
 
             elif ntype == "fr":
-                fr_x.append(x)
-                fr_y.append(y)
-                fr_label.append(attrs["label"])
-                fr_size.append(10 + 3 * math.sqrt(max(attrs["pubs"], 1)))
+                centre_lbl = fr_to_centre.get(nid, "")
+                c_hex = centre_color_map.get(centre_lbl, "#00bcd4")
+                r_, g_, b_ = _hex_rgb(c_hex)
 
-                fr_hover.append(
-                    f"<b>Auteur Inria</b><br>"
-                    f"Nom : {attrs['label']}<br>"
-                    f"# pubs : {attrs['pubs']}<br>"
-                    f"# pays partenaires : {attrs.get('nb_countries', 0)}"
+                fr_x.append(x); fr_y.append(y)
+                fr_size.append(9 + 3.5 * math.sqrt(max(attrs["pubs"], 1)))
+                fr_color_list.append(f"rgba({r_},{g_},{b_},0.90)")
+                fr_labels_list.append(attrs["label"])
+
+                hover_txt = (
+                    f"<b>👤 {attrs['label']}</b><br>"
+                    f"<i>{centre_lbl}</i><br>"
+                    f"📄 <b>{attrs['pubs']}</b> pubs · "
+                    f"🌍 <b>{attrs.get('nb_countries', 0)}</b> pays"
                 )
+                json_data = _json.dumps({
+                    "type": "fr", "id": nid,
+                    "label": attrs["label"],
+                    "centre": centre_lbl,
+                    "pubs": attrs["pubs"],
+                    "nb_countries": attrs.get("nb_countries", 0),
+                    "color": c_hex,
+                })
+                fr_hover_data.append(hover_txt)
+                fr_custom.append([hover_txt, json_data])
 
             elif ntype == "foreign":
-                fg_x.append(x)
-                fg_y.append(y)
-                fg_label.append(attrs["label"])
-                fg_size.append(8 + 2.5 * math.sqrt(max(attrs["pubs"], 1)))
+                fg_x.append(x); fg_y.append(y)
+                fg_size.append(6 + 2.5 * math.sqrt(max(attrs["pubs"], 1)))
+                fg_labels_list.append(attrs["label"])
 
-                fg_hover.append(
-                    f"<b>Auteur étranger</b><br>"
-                    f"Nom : {attrs['label']}<br>"
-                    f"Pays principal : {attrs.get('country', 'Pays inconnu')}<br>"
-                    f"# pubs : {attrs['pubs']}"
+                hover_txt = (
+                    f"<b>🌐 {attrs['label']}</b><br>"
+                    f"🗺 {attrs.get('country', '?')} · "
+                    f"📄 <b>{attrs['pubs']}</b> pubs"
                 )
+                json_data = _json.dumps({
+                    "type": "foreign", "id": nid,
+                    "label": attrs["label"],
+                    "country": attrs.get("country", "Inconnu"),
+                    "pubs": attrs["pubs"],
+                    "color": "#64748b",
+                })
+                fg_hover_data.append(hover_txt)
+                fg_custom.append([hover_txt, json_data])
 
-        # ------------- Centres : ronds blancs contour coloré + nom centré -------------
+        # ═══════ RENDU GALAXIE ═══════════════════════════════════
+
+        fg_trace = go.Scattergl(
+            x=fg_x, y=fg_y, mode="markers",
+            name="Auteurs étrangers",
+            marker=dict(size=fg_size, color=FG_COLOR,
+                        line=dict(width=0, color="rgba(0,0,0,0)")),
+            customdata=fg_custom,
+            hovertemplate="%{customdata[0]}<extra></extra>",
+        )
+
+        fr_trace = go.Scattergl(
+            x=fr_x, y=fr_y, mode="markers",
+            name="Auteurs Inria",
+            marker=dict(size=fr_size, color=fr_color_list,
+                        line=dict(width=0.4, color="rgba(255,255,255,0.25)"),
+                        opacity=0.92),
+            customdata=fr_custom,
+            hovertemplate="%{customdata[0]}<extra></extra>",
+        )
+
+        # Halos centres
+        halo_outer = go.Scattergl(
+            x=centre_x, y=centre_y, mode="markers",
+            marker=dict(
+                size=[s * 3.2 for s in centre_size],
+                color=[f"rgba({_hex_rgb(c)[0]},{_hex_rgb(c)[1]},{_hex_rgb(c)[2]},{HALO_ALPHA_OUT})"
+                       for c in centre_outline],
+                line=dict(width=0, color="rgba(0,0,0,0)"),
+            ),
+            hoverinfo="skip", showlegend=False,
+        )
+        halo_mid = go.Scattergl(
+            x=centre_x, y=centre_y, mode="markers",
+            marker=dict(
+                size=[s * 1.9 for s in centre_size],
+                color=[f"rgba({_hex_rgb(c)[0]},{_hex_rgb(c)[1]},{_hex_rgb(c)[2]},{HALO_ALPHA_MID})"
+                       for c in centre_outline],
+                line=dict(width=0, color="rgba(0,0,0,0)"),
+            ),
+            hoverinfo="skip", showlegend=False,
+        )
+
+        # Disque principal centre
         centre_trace = go.Scattergl(
-            x=centre_x,
-            y=centre_y,
-            mode="markers+text",
-            name="Centres",
+            x=centre_x, y=centre_y, mode="markers+text",
+            name="Centres Inria",
             marker=dict(
                 size=centre_size,
-                color="white",
-                line=dict(width=3, color=centre_outline),
-                opacity=0.98,
+                color=[f"rgba({_hex_rgb(c)[0]},{_hex_rgb(c)[1]},{_hex_rgb(c)[2]},{DISC_ALPHA})"
+                       for c in centre_outline],
+                line=dict(width=3.5, color=centre_outline),
             ),
-            text=centre_label,
-            textposition="middle center",
-            textfont=dict(size=9, color="#111111"),
-            customdata=centre_hover,
-            hovertemplate="%{customdata}<extra></extra>",
+            # Label affiché AU-DESSUS du nœud (pas dedans)
+            text=[f"<b>{lbl}</b>" for lbl in centre_label],
+            textposition="top center",
+            textfont=dict(
+                size=12,
+                color=TEXT_NODE_COLOR,
+                family="Open Sans, Arial, sans-serif",
+            ),
+            customdata=centre_custom,
+            hovertemplate="%{customdata[0]}<extra></extra>",
         )
 
-        # ------------- Auteurs Inria : verts (taille ∝ pubs) -------------
-        fr_trace = go.Scattergl(
-            x=fr_x,
-            y=fr_y,
+        # Fond coloré derrière le texte (halo du label)
+        centre_label_bg = go.Scattergl(
+            x=centre_x,
+            y=[yi + 0.06 for yi in centre_y],   # légèrement au-dessus
             mode="markers",
-            name="Auteurs Inria",
             marker=dict(
-                size=fr_size,
-                color="rgba(0,150,136,0.95)",
-                line=dict(width=0.8, color="rgba(0,0,0,0.55)"),
-                opacity=0.9,
+                size=[max(len(lbl) * 7.5, 60) for lbl in centre_label],
+                color=[f"rgba({_hex_rgb(c)[0]},{_hex_rgb(c)[1]},{_hex_rgb(c)[2]},0.70)"
+                       for c in centre_outline],
+                symbol="square",
+                line=dict(width=0, color="rgba(0,0,0,0)"),
+                opacity=1,
             ),
-            customdata=fr_hover,
-            hovertemplate="%{customdata}<extra></extra>",
+            hoverinfo="skip", showlegend=False,
         )
 
-        # ------------- Auteurs étrangers : noirs (taille ∝ pubs) -------------
-        fg_trace = go.Scattergl(
-            x=fg_x,
-            y=fg_y,
-            mode="markers",
-            name="Auteurs étrangers",
-            marker=dict(
-                size=fg_size,
-                color="rgba(30,30,30,0.95)",
-                line=dict(width=0.8, color="rgba(250,250,250,0.7)"),
-                opacity=0.9,
-            ),
-            customdata=fg_hover,
-            hovertemplate="%{customdata}<extra></extra>",
-        )
-
-        # Labels auteurs (optionnels)
+        # Labels auteurs (petits, au zoom)
         fr_labels_trace = go.Scattergl(
-            x=fr_x, y=fr_y,
-            mode="text",
-            text=fr_label,
-            textfont=dict(size=7, color="rgba(80,80,80,0.85)"),
-            hoverinfo="skip",
-            showlegend=False,
+            x=fr_x, y=fr_y, mode="text", text=fr_labels_list,
+            textfont=dict(size=6, color=LABEL_FR_COLOR),
+            hoverinfo="skip", showlegend=False,
         )
         fg_labels_trace = go.Scattergl(
-            x=fg_x, y=fg_y,
-            mode="text",
-            text=fg_label,
-            textfont=dict(size=7, color="rgba(120,120,120,0.8)"),
-            hoverinfo="skip",
-            showlegend=False,
+            x=fg_x, y=fg_y, mode="text", text=fg_labels_list,
+            textfont=dict(size=6, color=LABEL_FG_COLOR),
+            hoverinfo="skip", showlegend=False,
         )
 
-        fig_net = go.Figure(
-            data=[
-                edge_trace,
-                centre_trace,
-                fr_trace,
-                fg_trace,
-                fr_labels_trace,
-                fg_labels_trace,
-            ]
+        # Traces fantômes légende centres
+        legend_traces = []
+        for cname, chex in centre_color_map.items():
+            r_, g_, b_ = _hex_rgb(chex)
+            legend_traces.append(go.Scattergl(
+                x=[None], y=[None], mode="markers", name=cname,
+                marker=dict(size=11, color=f"rgba({r_},{g_},{b_},0.90)",
+                            line=dict(width=1.5, color=chex)),
+                showlegend=True,
+            ))
+
+        all_traces = (
+            edge_traces
+            + [halo_outer, halo_mid, fg_trace, fr_trace,
+               centre_label_bg, centre_trace,
+               fr_labels_trace, fg_labels_trace]
+            + legend_traces
         )
+
+        fig_net = go.Figure(data=all_traces)
 
         fig_net.update_layout(
-            template=GRAPH_TEMPLATE,
-            title="Réseau de copublications",
+            title=dict(
+                text=(f"Réseau de copublications — "
+                      f"<b>{G.number_of_nodes():,}</b> nœuds · "
+                      f"<b>{G.number_of_edges():,}</b> liens"),
+                font=dict(size=13, color=TITLE_COLOR,
+                          family="Open Sans, Arial, sans-serif"),
+                x=0.5, xanchor="center", pad=dict(t=4),
+            ),
             showlegend=True,
             legend=dict(
+                title=dict(text="<b>Centres Inria</b>",
+                           font=dict(size=11, color=LEGEND_FG)),
                 orientation="v",
-                x=0.01,
-                y=0.99,
-                xanchor="left",
-                yanchor="top",
-                bgcolor="rgba(255,255,255,0.85)",
-                bordercolor="rgba(0,0,0,0.2)",
-                borderwidth=1,
-                font=dict(size=10),
+                x=0.01, xanchor="left", y=0.99, yanchor="top",
+                bgcolor=LEGEND_BG,
+                bordercolor=LEGEND_BORDER, borderwidth=1,
+                font=dict(size=10, color=LEGEND_FG),
+                itemsizing="constant", tracegroupgap=1,
             ),
             xaxis=dict(showgrid=False, zeroline=False, visible=False),
-            yaxis=dict(showgrid=False, zeroline=False, visible=False, scaleanchor="x", scaleratio=1),
-            margin=dict(l=10, r=10, t=60, b=10),
+            yaxis=dict(showgrid=False, zeroline=False, visible=False,
+                       scaleanchor="x", scaleratio=1),
+            margin=dict(l=0, r=0, t=45, b=55),
             hovermode="closest",
-            paper_bgcolor="#FFFFFF",
-            plot_bgcolor="#FFFFFF",
+            paper_bgcolor=BG_NET,
+            plot_bgcolor=BG_NET,
+            hoverlabel=dict(
+                bgcolor="#1e293b", font_size=12,
+                font_color="#f1f5f9",
+                bordercolor="rgba(255,255,255,0.18)", namelength=0,
+            ),
+            clickmode="event",
+            annotations=[dict(
+                x=0.5, y=-0.005, xref="paper", yref="paper",
+                xanchor="center", yanchor="top",
+                text=(
+                    f"<b style='color:{LEGEND_FG}'>Types :</b>"
+                    " &nbsp;<span style='color:#60a5fa'>⬤</span> Auteurs Inria (couleur = centre)"
+                    " &nbsp;<span style='color:#64748b'>⬤</span> Auteurs étrangers"
+                    " &nbsp;<span style='color:#94a3b8'>◯</span> Centre Inria"
+                    " &nbsp;— Cliquez sur un nœud pour sa fiche"
+                ),
+                showarrow=False,
+                font=dict(size=10, color=ANNOT_FG),
+                bgcolor=ANNOT_BG,
+                bordercolor=LEGEND_BORDER,
+                borderwidth=1, borderpad=8,
+            )],
         )
         fig_net.layout.hovermode = "closest"
 
+        # ── Store de données pour l'interactivité clientside ──
+        import json as _json
+        node_lookup = {}
+        for nid, attrs in node_attrs.items():
+            ntype = attrs["type"]
+            if ntype == "centre":
+                node_lookup[attrs["label"]] = {
+                    "type": "centre",
+                    "label": attrs["label"],
+                    "pubs": attrs["pubs"],
+                    "nb_fr": attrs["nb_fr"],
+                    "nb_foreign": attrs["nb_foreign"],
+                    "nb_countries": attrs["nb_countries"],
+                    "nb_orgs": attrs["nb_orgs"],
+                    "color": centre_color_map.get(attrs["label"], "#888888"),
+                }
+            elif ntype == "fr":
+                centre_lbl = fr_to_centre.get(nid, "")
+                node_lookup[attrs["label"]] = {
+                    "type": "fr",
+                    "label": attrs["label"],
+                    "centre": centre_lbl,
+                    "pubs": attrs["pubs"],
+                    "nb_countries": attrs.get("nb_countries", 0),
+                    "color": centre_color_map.get(centre_lbl, "#00bcd4"),
+                }
+            elif ntype == "foreign":
+                node_lookup[attrs["label"]] = {
+                    "type": "foreign",
+                    "label": attrs["label"],
+                    "country": attrs.get("country", "Inconnu"),
+                    "pubs": attrs["pubs"],
+                    "color": "#64748b",
+                }
+
         # Même figure dans la vue "plein écran"
-        return fig_net, fig_net
-
+        return fig_net, fig_net, node_lookup
 
     # ========================================================
-    # 3bis — MODAL plein écran (fenêtre flottante)
+    # 3bis — FICHE NŒUD (clic sur un nœud) — callback Python
     # ========================================================
+    @app.callback(
+        Output("network-node-panel", "children"),
+        Input("network", "clickData"),
+        State("network-graph-data", "data"),
+        prevent_initial_call=True,
+    )
+    def update_node_panel(click_data, node_lookup):
+        from network_tab import _empty_panel
+
+        if not click_data or not node_lookup:
+            return _empty_panel()
+
+        try:
+            pt = click_data["points"][0]
+        except (KeyError, IndexError):
+            return _empty_panel()
+
+        # Récupérer le nom du nœud depuis le texte ou le customdata
+        # On essaie d'abord "text" (labels des centres), puis "hovertext"
+        name = pt.get("text") or pt.get("hovertext") or ""
+
+        # Si customdata disponible, lire la 2e colonne (JSON)
+        raw = pt.get("customdata")
+        data = None
+
+        if isinstance(raw, (list, tuple)) and len(raw) >= 2:
+            try:
+                import json as _json
+                data = _json.loads(str(raw[1]))
+            except Exception:
+                pass
+        if data is None and isinstance(raw, str):
+            try:
+                import json as _json
+                data = _json.loads(raw)
+            except Exception:
+                pass
+
+        # Fallback : chercher dans le store par nom
+        if data is None and name and node_lookup:
+            data = node_lookup.get(name)
+
+        if data is None:
+            return _empty_panel()
+
+        ntype = data.get("type", "")
+        color = data.get("color", "#27348b")
+
+        header_style = {
+            "background": f"linear-gradient(135deg, {color}22 0%, {color}08 100%)",
+            "borderBottom": f"3px solid {color}",
+            "padding": "12px 14px",
+            "borderRadius": "14px 14px 0 0",
+        }
+
+        def _badge(label, bg=None):
+            return html.Span(label, style={
+                "backgroundColor": bg or color,
+                "color": "white",
+                "padding": "3px 10px",
+                "borderRadius": "20px",
+                "fontSize": "0.72rem",
+                "fontWeight": "700",
+                "display": "inline-block",
+                "marginBottom": "6px",
+            })
+
+        def _row(icon, label, value):
+            return html.Div([
+                html.Span(icon + " "),
+                html.Span(label + " : ", className="text-muted small"),
+                html.Strong(str(value)),
+            ], className="mb-2 small")
+
+        if ntype == "centre":
+            body = [
+                html.Div([
+                    _badge("🏛 Centre Inria"),
+                    html.H5(data["label"], className="fw-bold mb-0 mt-1",
+                            style={"color": color, "fontSize": "1rem", "wordBreak": "break-word"}),
+                ], style=header_style),
+                dbc.CardBody([
+                    _row("📄", "Publications", f"{data['pubs']:,}"),
+                    _row("👤", "Auteurs Inria", f"{data['nb_fr']:,}"),
+                    _row("🌍", "Auteurs étrangers", f"{data['nb_foreign']:,}"),
+                    _row("🗺", "Pays partenaires", f"{data['nb_countries']:,}"),
+                    _row("🏢", "Organismes", f"{data['nb_orgs']:,}"),
+                ], style={"padding": "12px 14px"}),
+            ]
+
+        elif ntype == "fr":
+            body = [
+                html.Div([
+                    _badge("👤 Auteur Inria"),
+                    html.H5(data["label"], className="fw-bold mb-0 mt-1",
+                            style={"color": color, "fontSize": "1rem", "wordBreak": "break-word"}),
+                ], style=header_style),
+                dbc.CardBody([
+                    _row("🏛", "Centre", data.get("centre", "—")),
+                    _row("📄", "Publications", f"{data['pubs']:,}"),
+                    _row("🌍", "Pays partenaires", f"{data.get('nb_countries', 0):,}"),
+                ], style={"padding": "12px 14px"}),
+            ]
+
+        elif ntype == "foreign":
+            body = [
+                html.Div([
+                    _badge("🌐 Auteur étranger", "#64748b"),
+                    html.H5(data["label"], className="fw-bold mb-0 mt-1",
+                            style={"color": "#334155", "fontSize": "1rem", "wordBreak": "break-word"}),
+                ], style={**header_style,
+                           "background": "linear-gradient(135deg, #64748b22 0%, #64748b08 100%)",
+                           "borderBottom": "3px solid #64748b"}),
+                dbc.CardBody([
+                    _row("🗺", "Pays", data.get("country", "—")),
+                    _row("📄", "Publications", f"{data['pubs']:,}"),
+                ], style={"padding": "12px 14px"}),
+            ]
+
+        else:
+            return _empty_panel()
+
+        return dbc.Card(body, className="shadow-sm", style={
+            "borderRadius": "16px",
+            "border": f"1px solid {color}40",
+            "overflow": "hidden",
+        })
+
+
     @app.callback(
         Output("network-fullscreen-modal", "style"),
         [
@@ -1601,12 +1946,16 @@ def register_callbacks(app, df_base):
                 .reset_index(name="Publications")
             )
 
+            # Mapping couleur fixe pour les centres présents
+            centres_present = sun_df["Centre"].unique().tolist()
+            colour_map_sun = {c: get_centre_color(c, i) for i, c in enumerate(centres_present)}
+
             fig_sunburst = px.sunburst(
                 sun_df,
                 path=["Centre", "Equipe", "Organisme_copubliant"],
                 values="Publications",
                 color="Centre",
-                color_discrete_sequence=QUAL_PALETTE,
+                color_discrete_map=colour_map_sun,
                 title="Centre → Équipe → Organisme",
             )
             fig_sunburst.update_layout(template=GRAPH_TEMPLATE)
@@ -1682,6 +2031,16 @@ def register_callbacks(app, df_base):
                 targets.append(o)
                 values.append(v)
 
+            # Couleurs des nœuds : fixe pour les centres, neutre pour pays/org
+            def _sankey_node_color(label: str) -> str:
+                if label.startswith("Centre : "):
+                    centre_name = label[len("Centre : "):]
+                    return get_centre_color(centre_name, 0)
+                elif label.startswith("Pays : "):
+                    return "rgba(100,130,200,0.70)"
+                else:
+                    return "rgba(160,160,160,0.55)"
+
             fig_sankey = go.Figure(
                 data=[
                     go.Sankey(
@@ -1690,10 +2049,7 @@ def register_callbacks(app, df_base):
                             thickness=15,
                             line=dict(color="black", width=0.3),
                             label=labels,
-                            color=[
-                                QUAL_PALETTE[i % len(QUAL_PALETTE)]
-                                for i in range(len(labels))
-                            ],
+                            color=[_sankey_node_color(lbl) for lbl in labels],
                         ),
                         link=dict(
                             source=sources,
@@ -1718,7 +2074,6 @@ def register_callbacks(app, df_base):
         # 4) RADAR MULTI-CENTRES PAR DOMAINES
         # =========================================================================
         if "Centre" in dff.columns and "Domaine(s)" in dff.columns:
-            # On ne garde que les lignes avec centre + domaine
             dom_df = (
                 dff.dropna(subset=["Centre", "Domaine(s)"])
                 .groupby(["Centre", "Domaine(s)"])["HalID"]
@@ -1732,7 +2087,7 @@ def register_callbacks(app, df_base):
                     title="Profil par domaine (aucune donnée domaine)",
                 )
             else:
-                # Centres à tracer : ceux filtrés s'il y en a, sinon les principaux
+                # ── Centres à tracer ──
                 if centres:
                     centres_to_plot = [
                         c for c in centres if c in dom_df["Centre"].unique()
@@ -1745,8 +2100,6 @@ def register_callbacks(app, df_base):
                         .head(5)
                         .index.tolist()
                     )
-
-                # Si rien (centres filtrés pas présents), on prend les top
                 if not centres_to_plot:
                     centres_to_plot = (
                         dom_df.groupby("Centre")["Publications"]
@@ -1756,29 +2109,51 @@ def register_callbacks(app, df_base):
                         .index.tolist()
                     )
 
-                # Top domaines (axes du radar)
+                # ── Top domaines — on prend jusqu'à 8 pour plus de détail ──
                 top_dom = (
                     dom_df.groupby("Domaine(s)")["Publications"]
                     .sum()
                     .sort_values(ascending=False)
-                    .head(6)
+                    .head(8)
                     .index.tolist()
                 )
 
-                categories = top_dom
-                categories_closed = categories + categories[:1]
+                # ── Labels : on garde les noms complets, le wrapping se fait au layout ──
+                categories_raw    = top_dom
+                categories_closed = categories_raw + categories_raw[:1]
+
+                # ── Normalisation en % pour comparer centres de tailles différentes ──
+                centre_totals = (
+                    dom_df[dom_df["Centre"].isin(centres_to_plot)]
+                    .groupby("Centre")["Publications"]
+                    .sum()
+                    .to_dict()
+                )
 
                 fig_radar = go.Figure()
 
-                # Une trace par centre → superposition des polygones
                 for i, centre in enumerate(centres_to_plot):
-                    sub = dom_df[dom_df["Centre"] == centre]
-                    vals = []
-                    for dom in categories:
-                        vals.append(
+                    sub   = dom_df[dom_df["Centre"] == centre]
+                    total = centre_totals.get(centre, 1) or 1
+                    vals  = [
+                        round(
                             sub.loc[sub["Domaine(s)"] == dom, "Publications"].sum()
+                            / total * 100,
+                            1,
                         )
+                        for dom in categories_raw
+                    ]
                     vals_closed = vals + vals[:1]
+
+                    color = get_centre_color(centre, i)
+
+                    # Conversion hex → rgba pour le remplissage
+                    def _hex_to_rgba(hex_color, alpha=0.15):
+                        h = hex_color.lstrip("#")
+                        if len(h) == 3:
+                            h = "".join([c * 2 for c in h])
+                        r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+                        return f"rgba({r},{g},{b},{alpha})"
 
                     fig_radar.add_trace(
                         go.Scatterpolar(
@@ -1786,31 +2161,106 @@ def register_callbacks(app, df_base):
                             theta=categories_closed,
                             fill="toself",
                             name=centre,
-                            line=dict(color=QUAL_PALETTE[i % len(QUAL_PALETTE)]),
-                            opacity=0.55,
+                            line=dict(
+                                color=color,
+                                width=2.5,
+                            ),
+                            fillcolor=_hex_to_rgba(color, 0.15),
+                            opacity=1,
+                            hovertemplate=(
+                                "<b>" + centre + "</b><br>"
+                                "%{theta} : <b>%{r:.1f} %</b><extra></extra>"
+                            ),
                         )
                     )
 
+                # ── Titre court (noms des centres sur une seule ligne si possible) ──
+                if len(centres_to_plot) <= 3:
+                    titre_centres = " · ".join(centres_to_plot)
+                else:
+                    titre_centres = f"{len(centres_to_plot)} centres"
+
+                # ── Labels avec retour à la ligne pour les noms longs ──
+                def _wrap_label(s, maxlen=18):
+                    """Coupe le label en plusieurs lignes de maxlen caractères max."""
+                    s = str(s).strip()
+                    if len(s) <= maxlen:
+                        return s
+                    # Découpe sur les espaces
+                    words = s.split()
+                    lines, current = [], ""
+                    for w in words:
+                        if len(current) + len(w) + 1 <= maxlen:
+                            current = (current + " " + w).strip()
+                        else:
+                            if current:
+                                lines.append(current)
+                            current = w
+                    if current:
+                        lines.append(current)
+                    return "<br>".join(lines)
+
+                categories_wrapped = [_wrap_label(d) for d in categories_raw]
+                categories_closed_wrapped = categories_wrapped + categories_wrapped[:1]
+
+                # Mise à jour des traces avec les labels wrappés
+                for trace in fig_radar.data:
+                    trace.theta = categories_closed_wrapped
+
                 fig_radar.update_layout(
                     template=GRAPH_TEMPLATE,
-                    title=(
-                        "Profil par domaine – centres : "
-                        + ", ".join(centres_to_plot)
+                    title=dict(
+                        text=f"Profil par domaine — {titre_centres}",
+                        font=dict(size=13),
+                        x=0.5,
+                        xanchor="center",
+                        pad=dict(b=6),
                     ),
                     polar=dict(
+                        # Zone polaire réduite pour laisser la place aux labels
+                        domain=dict(x=[0.12, 0.88], y=[0.10, 0.92]),
+                        bgcolor="rgba(240,244,255,0.45)",
                         radialaxis=dict(
                             visible=True,
-                            tickfont=dict(size=10),
-                        )
+                            ticksuffix="%",
+                            tickfont=dict(size=9, color="#6b7280"),
+                            gridcolor="rgba(0,0,0,0.10)",
+                            linecolor="rgba(0,0,0,0.12)",
+                            range=[0, None],
+                            showline=True,
+                            tickangle=0,
+                        ),
+                        angularaxis=dict(
+                            tickfont=dict(
+                                size=10,
+                                color=PRIMARY,
+                                family="Open Sans, Arial, sans-serif",
+                            ),
+                            linecolor="rgba(0,0,0,0.15)",
+                            gridcolor="rgba(0,0,0,0.08)",
+                            rotation=90,
+                            direction="clockwise",
+                        ),
                     ),
                     legend=dict(
                         orientation="h",
-                        yanchor="bottom",
-                        y=-0.2,
-                        xanchor="center",
                         x=0.5,
+                        xanchor="center",
+                        y=-0.05,
+                        yanchor="top",
+                        font=dict(size=11),
+                        bgcolor="rgba(255,255,255,0.85)",
+                        bordercolor="rgba(0,0,0,0.08)",
+                        borderwidth=1,
+                    ),
+                    margin=dict(l=110, r=110, t=60, b=80),
+                    hoverlabel=dict(
+                        bgcolor="white",
+                        font_size=12,
+                        font_color=PRIMARY,
                     ),
                 )
+
         else:
             fig_radar = go.Figure().update_layout(
                 template=GRAPH_TEMPLATE,
@@ -2115,10 +2565,17 @@ def register_callbacks(app, df_base):
 
                 labels = [r["label"] for r in rows]
                 values = [r["pct"]   for r in rows]
-                colors = (
-                    [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(rows) - 1)]
-                    + ["rgba(200,200,200,0.35)"]
-                )
+                # Couleur fixe si col == Centre, sinon QUAL_PALETTE
+                if col == "Centre":
+                    colors = (
+                        [get_centre_color(r["label"], i) for i, r in enumerate(rows[:-1])]
+                        + ["rgba(200,200,200,0.35)"]
+                    )
+                else:
+                    colors = (
+                        [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(rows) - 1)]
+                        + ["rgba(200,200,200,0.35)"]
+                    )
                 pull   = [0.06] * (len(rows) - 1) + [0]
 
                 fig = go.Figure(go.Pie(
@@ -2149,10 +2606,16 @@ def register_callbacks(app, df_base):
                                    "pct": n_autres / total_global * 100}])
                 ], ignore_index=True)
 
-                colors = (
-                    [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(grp) - 1)]
-                    + ["rgba(200,200,200,0.35)"]
-                )
+                if col == "Centre":
+                    colors = (
+                        [get_centre_color(str(grp.iloc[i][col]), i) for i in range(len(grp) - 1)]
+                        + ["rgba(200,200,200,0.35)"]
+                    )
+                else:
+                    colors = (
+                        [QUAL_PALETTE[i % len(QUAL_PALETTE)] for i in range(len(grp) - 1)]
+                        + ["rgba(200,200,200,0.35)"]
+                    )
                 fig = go.Figure(go.Pie(
                     labels=grp[col].astype(str),
                     values=grp["pct"],
@@ -2257,12 +2720,19 @@ def register_callbacks(app, df_base):
                             merged["n_sel"] / merged["Total_global"].replace(0, np.nan) * 100
                         ).round(2)
 
+                        # Couleur fixe si dimension = Centre, sinon QUAL_PALETTE
+                        trace_color = (
+                            get_centre_color(str(val), color_idx)
+                            if col == "Centre"
+                            else QUAL_PALETTE[color_idx % len(QUAL_PALETTE)]
+                        )
+
                         fig_evol.add_trace(go.Scatter(
                             x=merged["Année"],
                             y=merged["pct"],
                             mode="lines+markers",
                             name=f"{dim_label} : {val}",
-                            line=dict(width=2.5, color=QUAL_PALETTE[color_idx % len(QUAL_PALETTE)]),
+                            line=dict(width=2.5, color=trace_color),
                             marker=dict(size=7),
                             hovertemplate=f"{dim_label} : {val}<br>Année : %{{x}}<br>Part : <b>%{{y:.2f}}%</b><extra></extra>",
                         ))
