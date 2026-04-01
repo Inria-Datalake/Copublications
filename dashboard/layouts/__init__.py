@@ -174,7 +174,7 @@ def create_layout(df):
 
                             # ---------- TAB 4 : Évolution par pays ---------- #
                             dcc.Tab(
-                                label="📈 Évolution par pays",
+                                label="Évolution par pays",
                                 value="tab-country-evolution",
                                 children=[country_evolution_tab_layout()],
                                 className="custom-tab",
@@ -183,7 +183,7 @@ def create_layout(df):
 
                             # ---------- TAB 5bis : Parts relatives ---------- #
                             dcc.Tab(
-                                label="📊 Parts relatives",
+                                label="Parts relatives",
                                 value="tab-share",
                                 children=[share_tab_layout()],
                                 className="custom-tab",

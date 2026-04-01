@@ -75,7 +75,7 @@ def network_tab_layout():
                     ),
                     # Toggle anonymisation auteurs étrangers
                     html.Button(
-                        "👁 Anonymiser noms étrangers",
+                        "Anonymiser noms étrangers",
                         id="network-anonymize",
                         n_clicks=0,
                         style={
