@@ -1103,6 +1103,7 @@ def register_callbacks(app, df_base):
             Input("network-max-pubs", "value"),
             Input("network-max-nodes", "value"),
             Input("toggle-dark", "n_clicks"),
+            Input("network-anonymize", "n_clicks"),
         ],
     )
     def update_network(
@@ -1117,6 +1118,7 @@ def register_callbacks(app, df_base):
         max_pubs,
         max_nodes,
         dark_clicks,
+        anonymize_clicks,
     ):
         # On ne dessine le réseau que dans l'onglet dédié
         if tab != "tab-network":
@@ -1476,31 +1478,37 @@ def register_callbacks(app, df_base):
         )
 
 
-        # ── Taille emoji selon le nombre de pubs ──
-        def _emoji_size(pubs):
-            return max(10, min(22, 10 + 2.5 * math.sqrt(max(pubs, 1))))
+        LABEL_FR_COLOR = "#1e293b" if not is_dark else "#e2e8f0"
+        LABEL_FG_COLOR = "#334155" if not is_dark else "#94a3b8"
 
-        # ── Auteurs étrangers : emoji 🎓 bleu foncé ──
+        # Anonymisation auteurs étrangers (toggle)
+        anonymize_fg = bool(anonymize_clicks) and (anonymize_clicks % 2 == 1)
+
+        # ── Auteurs étrangers : go.Scatter (HTML hover) ──
         fg_trace = go.Scatter(
-            x=fgx, y=fgy, mode="text",
-            name="Auteurs étrangers 🎓",
-            text=["🎓"] * len(fgx),
-            textfont=dict(size=[_emoji_size(foreign_stats.get(f"foreign::{lbl}", {}).get("pubs", 1))
-                                for lbl in fglbl]),
+            x=fgx, y=fgy, mode="markers",
+            marker=dict(
+                size=fgsz,
+                color="rgba(100,116,139,0.55)" if not is_dark else "rgba(148,163,184,0.50)",
+                line=dict(width=0.8, color="rgba(255,255,255,0.60)"),
+            ),
             customdata=fgcd,
             hovertemplate="%{customdata}<extra></extra>",
-            hoverlabel=dict(bgcolor="#1e3a5f", font_color="white"),
+            showlegend=False, name="",
         )
 
-        # ── Auteurs Inria : emoji 🎓 couleur du centre ──
+        # ── Auteurs Inria : go.Scatter (HTML hover) ──
         fr_trace = go.Scatter(
-            x=frx, y=fry, mode="text",
-            name="Auteurs Inria 🎓",
-            text=["🎓"] * len(frx),
-            textfont=dict(size=[_emoji_size(fr_stats.get(f"fr::{lbl}", {}).get("pubs", 1))
-                                for lbl in frlbl]),
+            x=frx, y=fry, mode="markers",
+            marker=dict(
+                size=frsz,
+                color=frcol,
+                line=dict(width=0.8, color="rgba(255,255,255,0.70)"),
+                opacity=0.90,
+            ),
             customdata=frcd,
             hovertemplate="%{customdata}<extra></extra>",
+            showlegend=False, name="",
         )
 
         # ── Halos centres (3 anneaux concentriques) ──
@@ -1516,67 +1524,56 @@ def register_callbacks(app, df_base):
                 hoverinfo="skip", showlegend=False,
             ))
 
-        # ── Disque centre (hover riche) ──
-        centre_disc = go.Scattergl(
+        # ── Disque centre : go.Scatter (HTML hover) ──
+        centre_disc = go.Scatter(
             x=cx, y=cy, mode="markers",
-            name="Centres Inria",
             marker=dict(
                 size=csz,
                 color=[_rgba(c, DISC_A) for c in cout],
-                line=dict(width=3, color="rgba(255,255,255,0.95)"),
+                line=dict(width=2.5, color="rgba(255,255,255,0.90)"),
             ),
             customdata=ccd,
             hovertemplate="%{customdata}<extra></extra>",
+            showlegend=False, name="",
         )
 
-        # ── Labels centres : fond blanc/sombre + texte couleur centre ──
-        # Ombre (décalage léger pour lisibilité)
-        centre_shadow = go.Scatter(
-            x=[xi + 0.003 for xi in cx],
-            y=[yi - 0.003 for yi in cy],
+        # ── Labels centres : UNE SEULE trace sous le disque ──
+        # Couleur sombre sur mode clair, claire sur mode sombre pour lisibilité
+        centre_label_color = "#1e293b" if not is_dark else "#f1f5f9"
+        centre_labels = go.Scatter(
+            x=cx,
+            y=cy,
             mode="text",
             text=clbl,
             textposition="bottom center",
             textfont=dict(
-                size=13,
-                color="rgba(0,0,0,0.45)" if not is_dark else "rgba(0,0,0,0.70)",
+                size=12,
+                color=centre_label_color,
                 family="Open Sans, Arial, sans-serif",
             ),
-            hoverinfo="skip", showlegend=False,
-        )
-        # Texte principal
-        centre_labels = go.Scatter(
-            x=cx, y=cy, mode="text",
-            text=clbl,
-            textposition="bottom center",
-            textfont=dict(
-                size=13,
-                color=cout,   # couleur du centre
-                family="Open Sans, Arial, sans-serif",
-            ),
-            hoverinfo="skip", showlegend=False,
+            hoverinfo="skip", showlegend=False, name="",
         )
 
-        # ── Labels auteurs : couleur contrastée + taille lisible ──
-        LABEL_FR_FINAL = "#c0392b" if not is_dark else "#ff6b6b"   # rouge pour Inria
-        LABEL_FG_FINAL = "#1a3a5c" if not is_dark else "#7fb3d3"   # bleu foncé pour étrangers
-
+        # ── Labels auteurs Inria ──
         fr_lbl_trace = go.Scattergl(
             x=frx, y=fry, mode="text", text=frlbl,
             textposition="top center",
-            textfont=dict(size=8, color=LABEL_FR_FINAL,
-                          family="Open Sans, Arial, sans-serif"),
-            hoverinfo="skip", showlegend=False,
-        )
-        fg_lbl_trace = go.Scattergl(
-            x=fgx, y=fgy, mode="text", text=fglbl,
-            textposition="top center",
-            textfont=dict(size=8, color=LABEL_FG_FINAL,
+            textfont=dict(size=8, color=LABEL_FR_COLOR,
                           family="Open Sans, Arial, sans-serif"),
             hoverinfo="skip", showlegend=False,
         )
 
-        # ── Légende centres ──
+        # ── Labels auteurs étrangers (masqués si anonymisation) ──
+        fg_lbl_trace = go.Scattergl(
+            x=fgx, y=fgy, mode="text",
+            text=["" if anonymize_fg else lbl for lbl in fglbl],
+            textposition="top center",
+            textfont=dict(size=8, color=LABEL_FG_COLOR,
+                          family="Open Sans, Arial, sans-serif"),
+            hoverinfo="skip", showlegend=False,
+        )
+
+        # ── Légende propre : un item par centre + 2 types ──
         legend_traces = []
         for cname, chex in centre_color_map.items():
             legend_traces.append(go.Scattergl(
@@ -1585,20 +1582,21 @@ def register_callbacks(app, df_base):
                             line=dict(width=2, color=chex)),
                 showlegend=True,
             ))
-        # Légende types de nœuds
         legend_traces += [
-            go.Scatter(x=[None], y=[None], mode="text",
-                       text=["🎓"], textfont=dict(size=14, color="#c0392b"),
-                       name="Auteur Inria", showlegend=True),
-            go.Scatter(x=[None], y=[None], mode="text",
-                       text=["🎓"], textfont=dict(size=14, color="#1a3a5c"),
-                       name="Auteur étranger", showlegend=True),
+            go.Scattergl(x=[None], y=[None], mode="markers",
+                         marker=dict(size=10, color=frcol[0] if frcol else "#636EFA",
+                                     line=dict(width=1, color="white")),
+                         name="Auteur Inria", showlegend=True),
+            go.Scattergl(x=[None], y=[None], mode="markers",
+                         marker=dict(size=10, color="rgba(100,116,139,0.70)",
+                                     line=dict(width=1, color="white")),
+                         name="Auteur étranger", showlegend=True),
         ]
 
         all_traces = (
             [edge_trace] + halo_traces
             + [fg_trace, fr_trace,
-               centre_shadow, centre_disc, centre_labels,
+               centre_disc, centre_labels,
                fr_lbl_trace, fg_lbl_trace]
             + legend_traces
         )

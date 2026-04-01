@@ -56,23 +56,45 @@ def network_tab_layout():
             html.Div(dcc.Slider(id="network-max-nodes", min=100, max=5000, step=100, value=1500),
                      style={"display": "none"}),
 
-            # ---------- Bouton plein écran ----------
+            # ---------- Barre de contrôles ----------
             html.Div(
-                html.Button(
-                    "⛶ Plein écran",
-                    id="btn-network-fullscreen-open",
-                    n_clicks=0,
-                    style={
-                        "padding": "8px 14px",
-                        "border": "1px solid rgba(0,0,0,0.2)",
-                        "borderRadius": "10px",
-                        "background": "white",
-                        "cursor": "pointer",
-                        "fontWeight": "600",
-                        "height": "40px",
-                    },
-                ),
-                style={"marginBottom": "10px"},
+                [
+                    html.Button(
+                        "⛶ Plein écran",
+                        id="btn-network-fullscreen-open",
+                        n_clicks=0,
+                        style={
+                            "padding": "8px 14px",
+                            "border": "1px solid rgba(0,0,0,0.2)",
+                            "borderRadius": "10px",
+                            "background": "white",
+                            "cursor": "pointer",
+                            "fontWeight": "600",
+                            "height": "40px",
+                        },
+                    ),
+                    # Toggle anonymisation auteurs étrangers
+                    html.Button(
+                        "👁 Anonymiser noms étrangers",
+                        id="network-anonymize",
+                        n_clicks=0,
+                        style={
+                            "padding": "8px 14px",
+                            "border": "1px solid rgba(0,0,0,0.2)",
+                            "borderRadius": "10px",
+                            "background": "white",
+                            "cursor": "pointer",
+                            "fontWeight": "600",
+                            "height": "40px",
+                        },
+                    ),
+                ],
+                style={
+                    "display": "flex",
+                    "gap": "10px",
+                    "marginBottom": "10px",
+                    "flexWrap": "wrap",
+                },
             ),
 
             # ---------- Graphe + fiche côte à côte ----------

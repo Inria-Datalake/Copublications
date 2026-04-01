@@ -114,8 +114,56 @@ def load_data():
     if "Centre" in df.columns:
         df["Centre"] = df["Centre"].astype(str).str.strip()
         df["Centre"] = df["Centre"].replace({
-            "Inria Saclay IPP": "Inria Saclay",
-            "Inria Saclay UPS": "Inria Saclay",
+            # Saclay
+            "Inria Saclay IPP":          "Inria Saclay",
+            "Inria Saclay UPS":          "Inria Saclay",
+            "Inria Saclay - Île-de-France": "Inria Saclay",
+            "Inria Saclay Ile-de-France":"Inria Saclay",
+            # Paris — fusion Paris + Paris Sorbonne
+            "Inria Paris Sorbonne":      "Inria Paris",
+            "Inria Paris - Sorbonne":    "Inria Paris",
+            "Inria Sorbonne":            "Inria Paris",
+            "Inria de Paris":            "Inria Paris",
+            "CRI Paris":                 "Inria Paris",
+            # Bordeaux
+            "Inria Bordeaux - Sud-Ouest":"Inria Univ. Bordeaux",
+            "Inria Bordeaux Sud-Ouest":  "Inria Univ. Bordeaux",
+            "Inria Bordeaux":            "Inria Univ. Bordeaux",
+            "Bordeaux":                  "Inria Univ. Bordeaux",
+            # Grenoble
+            "Inria Grenoble - Rhône-Alpes": "Inria Univ. Grenoble",
+            "Inria Grenoble Rhône-Alpes":"Inria Univ. Grenoble",
+            "Inria Grenoble":            "Inria Univ. Grenoble",
+            "Grenoble":                  "Inria Univ. Grenoble",
+            # Rennes
+            "Inria Rennes - Bretagne Atlantique": "Inria Univ. Rennes",
+            "Inria Rennes Bretagne Atlantique":   "Inria Univ. Rennes",
+            "Inria Rennes":              "Inria Univ. Rennes",
+            "Rennes":                    "Inria Univ. Rennes",
+            # Lorraine / Nancy
+            "Inria Nancy - Grand Est":   "Inria Univ. Lorraine",
+            "Inria Nancy Grand Est":     "Inria Univ. Lorraine",
+            "Inria Nancy":               "Inria Univ. Lorraine",
+            "Nancy":                     "Inria Univ. Lorraine",
+            "Grand Est":                 "Inria Univ. Lorraine",
+            # Lille
+            "Inria Lille - Nord Europe": "Inria Lille",
+            "Inria Lille Nord Europe":   "Inria Lille",
+            "Lille":                     "Inria Lille",
+            # Côte d'Azur
+            "Inria Univ. Côte d'Azur":  "Inria Univ. Cote Azur",
+            "Inria Univ. Côte Azur":    "Inria Univ. Cote Azur",
+            "Inria Univ Cote Azur":     "Inria Univ. Cote Azur",
+            "Inria Sophia Antipolis":    "Inria Univ. Cote Azur",
+            "Inria Sophia Antipolis - Méditerranée": "Inria Univ. Cote Azur",
+            "Sophia Antipolis":          "Inria Univ. Cote Azur",
+            "Sophia":                    "Inria Univ. Cote Azur",
+            # Lyon
+            "Lyon":                      "Inria Lyon",
+            # Siège
+            "Inria siège":               "Inria Siege",
+            "Inria Siège":               "Inria Siege",
+            "Inria siege":               "Inria Siege",
         })
 
     # Filtrage années
