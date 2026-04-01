@@ -1,28 +1,58 @@
-# Python
-__pycache__/
-*.py[cod]
-
-# Virtual env
+# Environnement virtuel
 .venv/
 venv/
+__pycache__/
+*.pyc
+*.pyo
 
-# IDE
-.idea/
-.vscode/
+# Données locales (chemins perso)
+dashboard.xlsx
+dashboard.csv
+*.xlsx
+*.csv
 
-# Jupyter
-.ipynb_checkpoints/
-
-# Secrets / keys
+# Clés SSH et secrets
 *.pem
 *.key
-*.p12
-*.ppk
-*.ssh
-*.pub
+id_rsa
+id_ed25519
+.env
+secrets.py
 
-# Data files (important for GitHub size limits)
+# Chemins locaux / config perso
+data.py
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Clés SSH
+Y.ssh
+Y.ssh.pub
+*.ssh
+*.ssh.pub
+*.pem
+*.key
+
+# Données locales
+dashboard.xlsx
+dashboard.csv
 *.csv
 *.xlsx
-# Data too large for GitHub
-dashboard_dri/Copublis_dashboard.csv
+
+# Notebooks perso
+*.ipynb
+.ipynb_checkpoints/
+
+# Environnement
+.venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
