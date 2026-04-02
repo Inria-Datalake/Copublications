@@ -1,4 +1,4 @@
-# 📊 Copublications Inria 
+
 # 📊 Copublications Internationales Inria
 
 Objectif : analyser les collaborations entre chercheurs et institutions à partir des publications Inria déposées dans l'archive ouverte HAL (https://inria.hal.science)
