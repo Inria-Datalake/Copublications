@@ -4,12 +4,17 @@
 Objectif : analyser les collaborations entre chercheurs et institutions à partir des publications Inria déposées dans l'archive ouverte HAL (https://inria.hal.science)
 
 Composants principaux de Copublis:
+
 A Copublis.ipynb -> tableau xlsx des copublications par auteur Inria, co-auteurs étrangers, affiliation directe, institution, pays.
+
 B ville_boost.ipynb  -> ajout des villes  dans le tableau précédent : 1 tableau xslx pour analyse et 1 tableau csv pour le Dashboard
+
 C Dashboard : un ensemble de fichiers pythons pour l'interface graphique de présentation des résultats
+
   
 
 --- A - Spécifications Copublis.ipynb ---
+
 Prérequis:
 --> outil pour lancer les scripts (Anaconda/Jupyter Notebook, Visual Studio Code, etc.)
 --> avoir les droits en écriture dans le répertoire où se trouve le script: Ce script extrait les données de HAL au format XML-TEI et les enregistre dans un sous-répertoire
@@ -26,6 +31,7 @@ Résultat:
 fichier xlsx par auteur Inria: une ligne pour chaque co-auteur étranger, avec affiliations et pays.
 
 --- B - Spécifications ville_boost.ipynb ---
+
 - cities500 contenant une copie du fichier cities500.txt (https://download.geonames.org/export/dump/)
 - dossier Geonames_contryInfo contenant une copie du fichier countryInfo.txt (https://download.geonames.org/export/dump/)
 - ainsi qu'un fichier contenant des villes associées à certaines structures d'Aurehal (ID_Aurehal_Ville_Etat_Latitude_Longitude.xlsx)
@@ -36,6 +42,7 @@ Sortie:
 
 
 --- C - Spécifications Dashboard ---
+
 L’interface propose des filtres, des indicateurs clés (KPI), des graphiques, un réseau de copublications et une carte interactive des collaborations.
 
 ## 🚀 Fonctionnalités
